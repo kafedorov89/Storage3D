@@ -1,0 +1,73 @@
+#pragma once
+#include "stdafx.h"
+#include <iostream>
+#include <sys/types.h> 
+#include <dirent.h>
+#include <regex>
+#include <vector>
+#include <string>
+#include <limits> 
+
+#define NOMINMAX
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
+
+#include <Eigen/Eigenvalues>
+
+#include <pcl/io/io.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/segmentation/segment_differences.h>
+#include <pcl/search/search.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/voxel_grid.h>
+
+//------------------------------------------------------------------
+
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl/features/moment_of_inertia_estimation.h>
+#include <pcl/common/transforms.h>
+
+#include <vtkStructuredPointsReader.h>
+#include <vtkBoundingBox.h>
+#include <vtkOBBTree.h>
+
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/kdtree/kdtree_flann.h>
+
+#include "stored_object.h"
+
+using namespace std;
+
+//Класс, хранящий информацию об одном СЛОЕ (сканировании склада)
+class StorageLayer
+{
+public:
+	//-----------------------------------------------------------------------------------------------
+	//Поля слоя
+	int UID; //Уникальный числовой идентификатор слоя
+	time_t AddedDate; //Время добавления слоя
+
+	pcl::PointCloud<pcl::PointXYZ>::Ptr layerNegativeDelta; //Массив типа <float> отрицательных разниц высот точек на данном слое по отношению к предыдущему
+	pcl::PointCloud<pcl::PointXYZ>::Ptr layerPositiveDelta; //Массив типа <float> положительных разниц высот точек на данном слое по отношению к предыдущему 
+	pcl::PointCloud<pcl::PointXYZ>::Ptr DepthMap; //Карта глубины (в реальных координатах)
+	vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> PositiveClasterList; //Кластеры найденные в облаке положительной дельты
+	vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> NegativeClasterList; //Кластеры найденные в облаке отрицательной дельты
+
+	vector<StoredObject> objectForAddList; //Массив типа <int> идентификаторов объектов добавленных на слое
+	vector<StoredObject> objectEraserList; //Массив объектов которые должны поглотить удаляемые объекты
+
+	//----------------------------------------------------------------------------------------------
+	//Методы слоя
+	StorageLayer(); //Конструктор класса StorageLayer
+	~StorageLayer();
+
+	static void StorageLayer::FindClaster(pcl::PointCloud<pcl::PointXYZ>::Ptr deltacloud, vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &clastervector, float tolerance = 0.3, int minclastersize = 200, int maxclastersize = 25000);
+	void FindObjectForAdd(float minx, float miny, float minz, float maxx, float maxy, float maxz); //Функция поиска объектов, добавленных на новом слое
+};
