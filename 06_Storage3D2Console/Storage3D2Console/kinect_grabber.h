@@ -26,16 +26,24 @@
 
 #include <NuiApi.h>
 
-class KinectGrabber
+class KinectGrab
 {
 public:
-	KinectGrabber(const int index = 0, bool rgbmode = false);
-	virtual ~KinectGrabber() throw ();
+	KinectGrab();
+	KinectGrab(bool rgbmode, const int index = 0);
+	/*virtual ~KinectGrab() throw ();
 	virtual void start();
 	virtual void stop();
 	virtual bool isRunning() const;
 	virtual std::string getName() const;
-	virtual float getFramesPerSecond() const;
+	virtual float getFramesPerSecond() const;*/
+
+	~KinectGrab();// throw ();
+	void start();
+	void stop();
+	bool isRunning() const;
+	std::string getName() const;
+	float getFramesPerSecond() const;
 
 	pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 	pcl::PointCloud<pcl::PointXYZRGB> PointCloudXYZRGB;
@@ -50,7 +58,7 @@ protected:
 	void convertDepthToPointXYZ(NUI_LOCKED_RECT* depthLockedRect);
 	void convertRGBDepthToPointXYZRGB(NUI_LOCKED_RECT* colorLockedRect, NUI_LOCKED_RECT* depthLockedRect);
 
-	boost::thread thread;
+	//boost::thread thread;
 	mutable boost::mutex mutex;
 
 	bool quit;

@@ -1,7 +1,11 @@
 #include "stdafx.h"
 #include "kinect_grabber.h"
 
-KinectGrabber::KinectGrabber(const int index, bool rgbmode){
+KinectGrab::KinectGrab(){
+
+}
+
+KinectGrab::KinectGrab(bool rgbmode, const int index){
 	sensor = nullptr;
 	mapper = nullptr;
 	result = S_OK;
@@ -57,17 +61,17 @@ KinectGrabber::KinectGrabber(const int index, bool rgbmode){
 	height = static_cast<int>(refHeight);
 }
 
-KinectGrabber::~KinectGrabber()
+KinectGrab::~KinectGrab()
 {
 	stop();
 
 	// End Processing
 	sensor->NuiShutdown();
 	mapper->Release();
-	thread.join();
+	//thread.join();
 }
 
-void KinectGrabber::start()
+void KinectGrab::start()
 {
 	//  Open Color Stream
 	result = sensor->NuiImageStreamOpen(NUI_IMAGE_TYPE_COLOR, NUI_IMAGE_RESOLUTION_640x480, 0, 2, 0, &colorHandle);
@@ -84,7 +88,7 @@ void KinectGrabber::start()
 	//getCloud();
 }
 
-void KinectGrabber::stop()
+void KinectGrab::stop()
 {
 	boost::unique_lock<boost::mutex> lock(mutex);
 
@@ -93,22 +97,22 @@ void KinectGrabber::stop()
 	lock.unlock();
 }
 
-bool KinectGrabber::isRunning() const
+bool KinectGrab::isRunning() const
 {
 	boost::unique_lock<boost::mutex> lock(mutex);
 	return running;
 	lock.unlock();
 }
 
-std::string KinectGrabber::getName() const{
-	return std::string("KinectGrabber");
+std::string KinectGrab::getName() const{
+	return std::string("KinectGrab");
 }
 
-float KinectGrabber::getFramesPerSecond() const {
+float KinectGrab::getFramesPerSecond() const {
 	return 30.0f;
 }
 
-void KinectGrabber::getCloud()
+void KinectGrab::getCloud()
 {
 	//Initializing clouds
 	PointCloudXYZ = pcl::PointCloud<pcl::PointXYZ>();
@@ -183,7 +187,7 @@ void KinectGrabber::getCloud()
 	}
 }
 
-void KinectGrabber::convertDepthToPointXYZ(NUI_LOCKED_RECT* depthLockedRect)
+void KinectGrab::convertDepthToPointXYZ(NUI_LOCKED_RECT* depthLockedRect)
 {
 	NUI_DEPTH_IMAGE_PIXEL* depthPixel = reinterpret_cast<NUI_DEPTH_IMAGE_PIXEL*>(depthLockedRect->pBits);
 
@@ -214,7 +218,7 @@ void KinectGrabber::convertDepthToPointXYZ(NUI_LOCKED_RECT* depthLockedRect)
 	}
 }
 
-void KinectGrabber::convertRGBDepthToPointXYZRGB(NUI_LOCKED_RECT* colorLockedRect, NUI_LOCKED_RECT* depthLockedRect)
+void KinectGrab::convertRGBDepthToPointXYZRGB(NUI_LOCKED_RECT* colorLockedRect, NUI_LOCKED_RECT* depthLockedRect)
 {
 	NUI_DEPTH_IMAGE_PIXEL* depthPixel = reinterpret_cast<NUI_DEPTH_IMAGE_PIXEL*>(depthLockedRect->pBits);
 

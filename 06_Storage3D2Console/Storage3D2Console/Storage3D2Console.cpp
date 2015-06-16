@@ -5,21 +5,24 @@
 #include "kinect_grabber.h"
 #include "storage.h"
 
-
 //#include "Scaner3D.h"
 
-using namespace pcl;
+//using namespace pcl;
 using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//vector<StoredObject> objects_list;
-	KinectGrabber grabber;
-	try{
-		KinectGrabber grabber = KinectGrabber(0, false);
-	}
-	catch (){
+	//KinectGrabber grabber = KinectGrabber(0, false);
+	KinectGrab *grabber;
 
+	try{
+		grabber = new KinectGrab(false);
+	}
+	catch (std::exception& e){
+		std::cout << "Kinect error: " << e.what() << std::endl;
+		cin.get();
+		return 0;
 	}
 
 	Storage *storage = new Storage();
@@ -31,12 +34,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	viewer.initCameraParameters();
 
 	//Grab layer
-	grabber.start();
-	grabber.getCloud();
+	grabber->start();
+	grabber->getCloud();
 	StorageLayer *oldlayer = new StorageLayer();
 	//Save first layer
-	oldlayer->DepthMap = grabber.PointCloudXYZPtr;
-	grabber.stop();
+	oldlayer->DepthMap = grabber->PointCloudXYZPtr;
+	grabber->stop();
 
 	//pcl::PointCloud<pcl::PointXYZ>::Ptr old_cloud(new pcl::PointCloud<pcl::PointXYZ>); //Debug
 	//pcl::io::loadPCDFile("old_cloud.pcd", *old_cloud); //Debug
@@ -44,12 +47,16 @@ int _tmain(int argc, _TCHAR* argv[])
 	//Main cycle for listen keys press
 	while (true){
 		if (GetKeyState(VK_SPACE) < 0){
+			std::cout << "Adding new storage layer..." << std::endl;
+			viewer.removeAllPointClouds();
+			viewer.removeAllShapes();
+			
 			//Grab layer
 			//grabber.start();
-			grabber.getCloud();
+			grabber->getCloud();
 			StorageLayer *newlayer = new StorageLayer();
 			//Save layer
-			newlayer->DepthMap = grabber.PointCloudXYZPtr;
+			newlayer->DepthMap = grabber->PointCloudXYZPtr;
 			//grabber.stop();
 			//Calc delta
 			storage->AddNewLayer(*newlayer);
@@ -129,7 +136,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		boost::this_thread::sleep(boost::posix_time::microseconds(100000));
 	}
 
-	grabber.stop();
+	grabber->stop();
 
 	return 0;
 }
