@@ -14,8 +14,14 @@ using namespace std;
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//vector<StoredObject> objects_list;
+	KinectGrabber grabber;
+	try{
+		KinectGrabber grabber = KinectGrabber(0, false);
+	}
+	catch (){
 
-	KinectGrabber grabber = KinectGrabber(0, false);
+	}
+
 	Storage *storage = new Storage();
 
 	pcl::visualization::PCLVisualizer viewer("Cloud Viewer");
@@ -47,15 +53,15 @@ int _tmain(int argc, _TCHAR* argv[])
 			//grabber.stop();
 			//Calc delta
 			storage->AddNewLayer(*newlayer);
- 			storage->CalcNewLayerDelta(oldlayer->DepthMap, newlayer->DepthMap, newlayer->layerPositiveDelta, newlayer->layerNegativeDelta);
+			storage->CalcNewLayerDelta(oldlayer->DepthMap, newlayer->DepthMap, newlayer->layerPositiveDelta, newlayer->layerNegativeDelta);
 			oldlayer->DepthMap.swap(newlayer->DepthMap);
 
 			//Extract clasters from positive delta
 			//StorageLayer::FindClaster(newlayer->layerPositiveDelta, newlayer->PositiveClasterList);
-			
+
 			//Extract clasters from negative delta
 			//StorageLayer::FindClaster(newlayer->layerNegativeDelta, newlayer->NegativeClasterList);
-			
+
 			//Find objects for add
 			//newlayer->FindObjectForAdd(0.2, 0.2, 0.2, 0.4, 0.4, 0.4);
 
@@ -63,10 +69,10 @@ int _tmain(int argc, _TCHAR* argv[])
 			//for (int i = 0; i < newlayer->objectForAddList.size() - 1; i++){
 			//	storage->AddNewObject(newlayer->objectForAddList[i]);
 			//}
-			
+
 			//Find objects for remove
 			//storage->FindObjectForRemove(newlayer->objectEraserList);
-			
+
 			//Remove founded objects
 			//storage->RemoveObjects();
 
@@ -84,34 +90,34 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			//Show erasers
 			/*for (int i = 0; i < newlayer->objectEraserList.size() - 1; i++){
-				std::stringstream ss;
-				ss << "Eraser" << i; 
+			std::stringstream ss;
+			ss << "Eraser" << i;
 
-				viewer.addCube(newlayer->objectEraserList[i].position,
-					newlayer->objectEraserList[i].quaternion_to_bbox,
-					newlayer->objectEraserList[i].width,
-					newlayer->objectEraserList[i].lenght,
-					newlayer->objectEraserList[i].height, ss.str());
-				viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)200 / (float)255, (float)0 / (float)255, (float)0 / (float)255, ss.str());
+			viewer.addCube(newlayer->objectEraserList[i].position,
+			newlayer->objectEraserList[i].quaternion_to_bbox,
+			newlayer->objectEraserList[i].width,
+			newlayer->objectEraserList[i].lenght,
+			newlayer->objectEraserList[i].height, ss.str());
+			viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)200 / (float)255, (float)0 / (float)255, (float)0 / (float)255, ss.str());
 			}*/
 
 			//Show actual and removed objects
 			/*for (int i = 0; i < storage->ObjectList.size() - 1; i++){
-				std::stringstream ss;
-				ss << "Actual objects" << i;
+			std::stringstream ss;
+			ss << "Actual objects" << i;
 
-				viewer.addCube(storage->ObjectList[i].position,
-					storage->ObjectList[i].quaternion_to_bbox,
-					storage->ObjectList[i].width,
-					storage->ObjectList[i].lenght,
-					storage->ObjectList[i].height, ss.str());
+			viewer.addCube(storage->ObjectList[i].position,
+			storage->ObjectList[i].quaternion_to_bbox,
+			storage->ObjectList[i].width,
+			storage->ObjectList[i].lenght,
+			storage->ObjectList[i].height, ss.str());
 
-				if (!storage->ObjectList[i].removed){
-					viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)255 / (float)255, (float)255 / (float)255, (float)255 / (float)255, ss.str());
-				}
-				else{
-					viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)0 / (float)255, (float)255 / (float)255, ss.str());
-				}
+			if (!storage->ObjectList[i].removed){
+			viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)255 / (float)255, (float)255 / (float)255, (float)255 / (float)255, ss.str());
+			}
+			else{
+			viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)0 / (float)255, (float)255 / (float)255, ss.str());
+			}
 			}*/
 		}
 
@@ -124,7 +130,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	grabber.stop();
-	
+
 	return 0;
 }
 
