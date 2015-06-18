@@ -13,7 +13,6 @@
 
 #include <regex>
 #include <vector>
-#include <string>
 #include <limits>
 
 #define NOMINMAX
@@ -61,7 +60,11 @@ using namespace std;*/
 #pragma once
 #include "targetver.h"
 #include <stdio.h>
+#include <iostream>
+#include <string>
 #include <tchar.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 
 

@@ -41,8 +41,17 @@
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/kdtree/kdtree_flann.h>
 
+#include <pcl/ModelCoefficients.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+
+#include <pcl/filters/statistical_outlier_removal.h>
+
 #include "stored_object.h"
 #include "storage_layer.h"
+
+#include "PCLFunctions.h" 
 
 using namespace std;
 
@@ -59,11 +68,16 @@ public:
 	vector<int> objectIDForRemoveList; //Массив типа <int> идентификаторов объектов отмеченных для удаления со склада
 
 	float deltaLimit; //Допуск на разницу между высотами слоев после которой значения из layerDelta считаются существенными
-	float deltaValidPercent; // (0 - 1)Процент точек карты глубины с отрицательным значением Delta при котором объект будет удален 
+	//float deltaValidPercent; // (0 - 1)Процент точек карты глубины с отрицательным значением Delta при котором объект будет удален
+	float DistanceThreshold;
+	float zEpsAngle;
+	bool planeFiltration;
+	bool perpendicularOnly;
+	bool noizeFiltration;
 
 	//----------------------------------------------------------------------------------------------
 	//Методы склада
-	Storage(float deltalimit = 0.06f, float deltavalpercnt = 0.7f);
+	Storage(float deltalimit = 0.06f, float planethreshold = 0.01f, float zepsangle = 0.01f, bool planefiltration = false, bool perpendicularonly = false, bool noizefiltration = true);// float deltavalpercnt = 0.7f
 	~Storage();
 
 	void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcloud,

@@ -1,11 +1,13 @@
 #include "stdafx.h"
 #include "kinect_grabber.h"
 
+using namespace std;
+
 KinectGrab::KinectGrab(){
 
 }
 
-KinectGrab::KinectGrab(bool rgbmode, const int index){
+KinectGrab::KinectGrab(bool rgbmode, int index){
 	sensor = nullptr;
 	mapper = nullptr;
 	result = S_OK;
@@ -90,18 +92,18 @@ void KinectGrab::start()
 
 void KinectGrab::stop()
 {
-	boost::unique_lock<boost::mutex> lock(mutex);
+	//boost::unique_lock<boost::mutex> lock(mutex);
 
 	quit = true;
 	running = false;
-	lock.unlock();
+	//lock.unlock();
 }
 
 bool KinectGrab::isRunning() const
 {
-	boost::unique_lock<boost::mutex> lock(mutex);
+	//boost::unique_lock<boost::mutex> lock(mutex);
 	return running;
-	lock.unlock();
+	//lock.unlock();
 }
 
 std::string KinectGrab::getName() const{
@@ -115,12 +117,12 @@ float KinectGrab::getFramesPerSecond() const {
 void KinectGrab::getCloud()
 {
 	//Initializing clouds
-	PointCloudXYZ = pcl::PointCloud<pcl::PointXYZ>();
-	PointCloudXYZRGB = pcl::PointCloud<pcl::PointXYZRGB>();
+	//PointCloudXYZ = pcl::PointCloud<pcl::PointXYZ>();
+	//PointCloudXYZRGB = pcl::PointCloud<pcl::PointXYZRGB>();
 	PointCloudXYZPtr = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
 	PointCloudXYZRGBPtr = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>(new pcl::PointCloud<pcl::PointXYZRGB>);
 	
-	boost::unique_lock<boost::mutex> lock(mutex);
+	//boost::unique_lock<boost::mutex> lock(mutex);
 
 	// Retrieved Color Data from Kinect
 	NUI_IMAGE_FRAME colorImageFrame = { 0 };
@@ -155,7 +157,7 @@ void KinectGrab::getCloud()
 	depthFrameTexture->UnlockRect(0);
 	sensor->NuiImageStreamReleaseFrame(depthHandle, &depthImageFrame);
 
-	lock.unlock();
+	//lock.unlock();
 
 	/*time_t rawtime;
 	struct tm * timeinfo;
@@ -178,12 +180,12 @@ void KinectGrab::getCloud()
 
 	if (RGBMode){
 		convertRGBDepthToPointXYZRGB(&colorLockedRect, &depthLockedRect);
-		//pcl::io::savePCDFileBinaryCompressed(filename, PointCloudXYZRGB);
+		//pcl::io::savePCDFileBinaryCompressed(filename, *PointCloudXYZRGBPtr);
 
 	}
 	else{
 		convertDepthToPointXYZ(&depthLockedRect);
-		//pcl::io::savePCDFileBinaryCompressed(filename, PointCloudXYZ);
+		//pcl::io::savePCDFileBinaryCompressed(filename, *PointCloudXYZPtr);
 	}
 }
 
@@ -192,8 +194,8 @@ void KinectGrab::convertDepthToPointXYZ(NUI_LOCKED_RECT* depthLockedRect)
 	NUI_DEPTH_IMAGE_PIXEL* depthPixel = reinterpret_cast<NUI_DEPTH_IMAGE_PIXEL*>(depthLockedRect->pBits);
 
 	int i = 0;
-	PointCloudXYZ = pcl::PointCloud<pcl::PointXYZ>(width, height, pcl::PointXYZ());
-	PointCloudXYZ.is_dense = false;
+	//PointCloudXYZ = pcl::PointCloud<pcl::PointXYZ>(width, height, pcl::PointXYZ());
+	//PointCloudXYZ.is_dense = false;
 
 	for (int y = 0; y < height; y++){
 		for (int x = 0; x < width; x++, i++){
@@ -212,7 +214,7 @@ void KinectGrab::convertDepthToPointXYZ(NUI_LOCKED_RECT* depthLockedRect)
 			point.y = skeletonPoint.y;
 			point.z = skeletonPoint.z;
 
-			PointCloudXYZ[i] = pcl::PointXYZ(point);
+			//PointCloudXYZ[i] = pcl::PointXYZ(point);
 			PointCloudXYZPtr->push_back(point);
 		}
 	}
@@ -223,8 +225,8 @@ void KinectGrab::convertRGBDepthToPointXYZRGB(NUI_LOCKED_RECT* colorLockedRect, 
 	NUI_DEPTH_IMAGE_PIXEL* depthPixel = reinterpret_cast<NUI_DEPTH_IMAGE_PIXEL*>(depthLockedRect->pBits);
 
 	int i = 0;
-	PointCloudXYZRGB = pcl::PointCloud<pcl::PointXYZRGB>(width, height, pcl::PointXYZRGB());
-	PointCloudXYZRGB.is_dense = false;
+	//PointCloudXYZRGB = pcl::PointCloud<pcl::PointXYZRGB>(width, height, pcl::PointXYZRGB());
+	//PointCloudXYZRGB.is_dense = false;
 
 	for (int y = 0; y < height; y++){
 		for (int x = 0; x < width; x++, i++){
@@ -254,7 +256,7 @@ void KinectGrab::convertRGBDepthToPointXYZRGB(NUI_LOCKED_RECT* colorLockedRect, 
 				point.r = colorLockedRect->pBits[index + 2];
 			}
 
-			PointCloudXYZRGB[i] = pcl::PointXYZRGB(point);
+			//PointCloudXYZRGB[i] = pcl::PointXYZRGB(point);
 			PointCloudXYZRGBPtr->push_back(point);
 		}
 	}

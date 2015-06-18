@@ -223,12 +223,12 @@ namespace pcl
 		time(&rawtime);
 		timeinfo = localtime(&rawtime);
 
-		timestring = std::to_string(timeinfo->tm_sec) +
+		timestring = std::to_string(timeinfo->tm_year) + 
+			std::to_string(timeinfo->tm_mon) +
+			std::to_string(timeinfo->tm_mday) +
 			std::to_string(timeinfo->tm_hour) +
 			std::to_string(timeinfo->tm_min) +
-			std::to_string(timeinfo->tm_mday) + 
-			std::to_string(timeinfo->tm_mon) + 
-			std::to_string(timeinfo->tm_year);
+			std::to_string(timeinfo->tm_sec);
 		//strftime(buffer, buffer_size, "%M%H%e%m%G", timeinfo);
 			
 		std::string filename = "point_cloud_" + timestring + ".pcd";

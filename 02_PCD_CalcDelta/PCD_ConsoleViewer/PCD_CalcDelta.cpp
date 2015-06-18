@@ -152,8 +152,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 	}
 
-
-
 	delta_pos_cloud_save = pcl::PointCloud<pcl::PointXYZ>(delta_pos_cloud->size(), 1, pcl::PointXYZ());
 	delta_neg_cloud_save = pcl::PointCloud<pcl::PointXYZ>(delta_neg_cloud->size(), 1, pcl::PointXYZ());
 	

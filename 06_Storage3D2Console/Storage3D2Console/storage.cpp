@@ -2,15 +2,21 @@
 #include "stdafx.h"
 #include "storage.h"
 
+//using namespace pcl;
 using namespace std;
 
-Storage::Storage(float deltalimit, float deltavalpercnt)
+Storage::Storage(float deltalimit, float planethreshold, float zepsangle, bool planefiltration, bool perpendicularonly, bool noizefiltration) //float deltavalpercnt
 {
 	//LayerList = vector<StorageLayer>(0);
 	//ObjectList = vector<std::vector<StoredObject>>(0);
 
 	deltaLimit = deltalimit;
-	deltaValidPercent = deltavalpercnt;
+	DistanceThreshold = planethreshold;
+	zEpsAngle = zepsangle;
+	planeFiltration = planefiltration;
+	perpendicularOnly = perpendicularonly;
+	noizeFiltration = noizefiltration;
+	//deltaValidPercent = deltavalpercnt;
 }
 
 Storage::~Storage()
@@ -42,6 +48,12 @@ void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcl
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXY>::Ptr delta2d_cloud(new pcl::PointCloud<pcl::PointXY>);
+
+	//pcl::PointCloud<pcl::PointXYZ>::Ptr plane_delta_pos_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+	//pcl::PointCloud<pcl::PointXYZ>::Ptr plane_delta_neg_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+	//pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_delta_pos_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+	//pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_delta_neg_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
 	//new_cloud.swap(newcloud);
 	/*pcl::VoxelGrid<pcl::PCLPointCloud2> old_vg;
@@ -128,6 +140,21 @@ void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcl
 				}
 			}
 		}
+	}
+
+	if (noizeFiltration)
+	{
+		CloudNoizeFiltration(delta_pos_cloud, delta_pos_cloud);
+		CloudNoizeFiltration(delta_neg_cloud, delta_neg_cloud);
+	}
+
+	if (planeFiltration)
+	{
+
+		//zEpsAngle
+		//DistanceThreshold
+		CloudPlaneFiltration(delta_pos_cloud, delta_pos_cloud);
+		CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud);
 	}
 }
 

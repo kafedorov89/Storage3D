@@ -84,8 +84,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinect_grabber.h" />
+    <ClInclude Include="PCLFunctions.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="storage.h" />
+    <ClInclude Include="Storage3D2Functions.h" />
     <ClInclude Include="storage_layer.h" />
     <ClInclude Include="stored_object.h" />
     <ClInclude Include="targetver.h" />
@@ -100,6 +102,9 @@
     <ClCompile Include="Storage3D2Console.cpp" />
     <ClCompile Include="storage_layer.cpp" />
     <ClCompile Include="stored_object.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

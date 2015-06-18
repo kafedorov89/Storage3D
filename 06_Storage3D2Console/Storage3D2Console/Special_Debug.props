@@ -6,7 +6,7 @@
   <ItemDefinitionGroup>
     <ClCompile />
     <ClCompile>
-      <AdditionalOptions>/Zm1000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm1000 /sdl %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
