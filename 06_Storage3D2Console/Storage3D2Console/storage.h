@@ -41,17 +41,11 @@
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/kdtree/kdtree_flann.h>
 
-#include <pcl/ModelCoefficients.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-
-#include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/point_cloud.h>
 
 #include "stored_object.h"
-#include "storage_layer.h"
-
-#include "PCLFunctions.h" 
+#include "storage_layer.h" 
+#include "PCLFunctions.h"
 
 using namespace std;
 

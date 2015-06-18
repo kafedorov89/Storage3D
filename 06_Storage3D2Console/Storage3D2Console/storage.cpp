@@ -30,17 +30,7 @@ void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcl
 
 	//Initialization of point clouds source, target and two outputs
 	pcl::PointCloud<pcl::PointXYZ>::Ptr old_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	//pcl::io::loadPCDFile("old_cloud.pcd", *old_cloud);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr voxel_old_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	//voxel_old_cloud->is_dense = true;
-
-	//pcl::PointCloud<pcl::PointXYZ>::Ptr voxel_old_cloud;
-	//voxel_old_cloud = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
-	//pcl::Filter<pcl::PCLPointCloud2> voxel_old_cloud2(new pcl::Filter<pcl::PCLPointCloud2>());
-	//pcl::PCLPointCloud2::Ptr voxel_old_cloud2(new pcl::PCLPointCloud2());
-
-	//pcl::PCLPointCloud2::Ptr oldcloud2(new pcl::PCLPointCloud2());
-
 	pcl::PointCloud<pcl::PointXY>::Ptr old2d_cloud(new pcl::PointCloud<pcl::PointXY>);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr new_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -48,23 +38,6 @@ void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcl
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXY>::Ptr delta2d_cloud(new pcl::PointCloud<pcl::PointXY>);
-
-	//pcl::PointCloud<pcl::PointXYZ>::Ptr plane_delta_pos_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	//pcl::PointCloud<pcl::PointXYZ>::Ptr plane_delta_neg_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-
-	//pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_delta_pos_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	//pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_delta_neg_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-
-	//new_cloud.swap(newcloud);
-	/*pcl::VoxelGrid<pcl::PCLPointCloud2> old_vg;
-	pcl::toPCLPointCloud2(*oldcloud, *oldcloud2);
-	old_vg.setInputCloud(oldcloud2);
-	old_vg.setLeafSize(0.01f, 0.01f, 0.01f); //FIXME. Need to create function with flexeble values for leaf cloud size (Cloud, Count point per dimentions -> BoundingBox -> dimentions -> setLeafSize -> LightCloud)
-	old_vg.filter(*voxel_old_cloud2);
-	pcl::fromPCLPointCloud2(*voxel_old_cloud2, *old_cloud);*/
-	//old_cloud.swap(voxel_old_cloud);
-
-	//pcl::io::loadPCDFile("old_cloud.pcd", *old_cloud);
 
 	pcl::VoxelGrid<pcl::PointXYZ> old_vg;
 	old_vg.setInputCloud(oldcloud);

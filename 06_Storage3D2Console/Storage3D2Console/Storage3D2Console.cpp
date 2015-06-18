@@ -126,7 +126,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			loadSettingsFile();
 			
 			storage->deltaLimit = delta_limit;
-			storage->planeSegDistanceThreshold = plane_threshold;
+			storage->DistanceThreshold = plane_threshold;
 			storage->zEpsAngle = zepsangle;
 			storage->planeFiltration = planefiltration;
 			

@@ -2,7 +2,6 @@
 #include "stdafx.h"
 #include "storage_layer.h"
 
-using namespace pcl;
 using namespace std;
 
 StorageLayer::StorageLayer(){ //Конструктор класса StorageLayer
@@ -49,36 +48,6 @@ void StorageLayer::FindClaster(pcl::PointCloud<pcl::PointXYZ>::Ptr deltacloud, v
 		cloud_cluster->height = 1;
 		cloud_cluster->is_dense = true;
 
-		
-		
-		//Finding plane segments and filtering positive and negative delta
-		pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud_claster(new pcl::PointCloud<pcl::PointXYZ>);
-		pcl::SACSegmentation<pcl::PointXYZ> claster_plane_seg;
-		pcl::ModelCoefficients::Ptr claster_coefficients(new pcl::ModelCoefficients);
-		pcl::PointIndices::Ptr claster_inliers(new pcl::PointIndices);
-		claster_plane_seg.setOptimizeCoefficients(true);
-
-		//claster_plane_seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
-		//claster_plane_seg.setAxis(Eigen::Vector3f(0, 0, 1));
-		//claster_plane_seg.setEpsAngle(0.1);
-
-		claster_plane_seg.setModelType(pcl::SACMODEL_PLANE);
-
-		claster_plane_seg.setMethodType(pcl::SAC_RANSAC);
-		claster_plane_seg.setDistanceThreshold(0.1);
-		claster_plane_seg.setInputCloud(cloud_cluster);
-		claster_plane_seg.segment(*claster_inliers, *claster_coefficients);
-
-		if (claster_inliers->indices.size() > 0){
-			for (int i = claster_inliers->indices.size() - 1; i > 0; i--){
-				//pcl::PointCloud<PointXYZ>::const_iterator del = ;
-				plane_cloud_claster->push_back(cloud_cluster->points[claster_inliers->indices[i]]);
-			}
-			cloud_cluster.swap(plane_cloud_claster);
-		}
-
-
-
 		clastervector.push_back(cloud_cluster);
 	}
 }
@@ -96,31 +65,6 @@ void StorageLayer::FindObjectForAdd(float minx, float miny, float minz, float ma
 }
 
 void StorageLayer::SaveLayerToPCD(bool firstLayer){
-	/*pcl::PointCloud<pcl::PointXYZ>::Ptr delta_pos_cloud_save(new pcl::PointCloud<pcl::PointXYZ>);// = pcl::PointCloud<pcl::PointXYZ>(layerPositiveDelta->size(), 1);// = pcl::PointCloud<pcl::PointXYZ>();
-	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_neg_cloud_save(new pcl::PointCloud<pcl::PointXYZ>);// = pcl::PointCloud<pcl::PointXYZ>(layerNegativeDelta->size(), 1);// = pcl::PointCloud<pcl::PointXYZ>();
-	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_cloud_save(new pcl::PointCloud<pcl::PointXYZ>);// = pcl::PointCloud<pcl::PointXYZ>(DepthMap->size(), 1);// = pcl::PointCloud<pcl::PointXYZ>();
-
-	for (int i = 0; i < layerPositiveDelta->size() - 1; i++){
-		//delta_pos_cloud_save[i] = new pcl::PointXYZ();
-		delta_pos_cloud_save->at(i).x = layerPositiveDelta->at(i).x;
-		delta_pos_cloud_save->at(i).y = layerPositiveDelta->at(i).y;
-		delta_pos_cloud_save->at(i).z = layerPositiveDelta->at(i).z;
-	}
-
-	for (int i = 0; i < layerNegativeDelta->size() - 1; i++){
-		//delta_neg_cloud_save[i] = new pcl::PointXYZ();
-		delta_neg_cloud_save->at(i).x = layerNegativeDelta->at(i).x;
-		delta_neg_cloud_save->at(i).y = layerNegativeDelta->at(i).y;
-		delta_neg_cloud_save->at(i).z = layerNegativeDelta->at(i).z;
-	}
-
-	for (int i = 0; i < DepthMap->size() - 1; i++){
-		//delta_cloud_save[i] = new pcl::PointXYZ();
-		delta_cloud_save->at(i).x = DepthMap->at(i).x;
-		delta_cloud_save->at(i).y = DepthMap->at(i).y;
-		delta_cloud_save->at(i).z = DepthMap->at(i).z;
-	}*/
-
 	time_t rawtime;
 	struct tm * timeinfo;
 	std::string timestring;
@@ -135,18 +79,10 @@ void StorageLayer::SaveLayerToPCD(bool firstLayer){
 		std::to_string(timeinfo->tm_mon) +
 		std::to_string(timeinfo->tm_year);
 	
-	//pcl::io::savePCDFileBinaryCompressed("delta_pos_cloud_" + timestring + ".pcd", *delta_pos_cloud_save);
-	//pcl::io::savePCDFileBinaryCompressed("delta_neg_cloud_" + timestring + ".pcd", *delta_neg_cloud_save);
-	//pcl::io::savePCDFileBinaryCompressed("delta_cloud_" + timestring + ".pcd", *delta_neg_cloud_save);*/
-
 	if (!firstLayer){
 		pcl::io::savePCDFileBinaryCompressed("delta_pos_cloud_" + timestring + ".pcd", *layerPositiveDelta);
 		pcl::io::savePCDFileBinaryCompressed("delta_neg_cloud_" + timestring + ".pcd", *layerNegativeDelta);
 	}
 
 	pcl::io::savePCDFileBinaryCompressed("layer_cloud_" + timestring + ".pcd", *DepthMap);
-
-	//pcl::io::savePCDFileBinaryCompressed("delta_pos_cloud.pcd", *layerPositiveDelta);
-	//pcl::io::savePCDFileBinaryCompressed("delta_neg_cloud.pcd", *layerNegativeDelta);
-	//pcl::io::savePCDFileBinaryCompressed("delta_cloud.pcd", *DepthMap);
 }

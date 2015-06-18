@@ -62,6 +62,9 @@
     <ClCompile Include="stored_object.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PCLFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="config.ini">
