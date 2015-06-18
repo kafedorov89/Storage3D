@@ -65,6 +65,7 @@ public:
 	//-----------------------------------------------------------------------------------------------
 	//Поля слоя
 	int UID; //Уникальный числовой идентификатор слоя
+	int storageUID; //Уникальный числовой идентификатор склада
 	time_t AddedDate; //Время добавления слоя
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr layerNegativeDelta; //Массив типа <float> отрицательных разниц высот точек на данном слое по отношению к предыдущему
@@ -79,6 +80,7 @@ public:
 	//----------------------------------------------------------------------------------------------
 	//Методы слоя
 	StorageLayer(); //Конструктор класса StorageLayer
+	StorageLayer(int layeruid, int storageuid); //Конструктор класса StorageLayer
 	~StorageLayer();
 
 	static void StorageLayer::FindClaster(pcl::PointCloud<pcl::PointXYZ>::Ptr deltacloud, vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &clastervector, float tolerance = 0.08, int minclastersize = 200, int maxclastersize = 250000);

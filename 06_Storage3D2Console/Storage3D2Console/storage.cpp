@@ -5,11 +5,11 @@
 //using namespace pcl;
 using namespace std;
 
-Storage::Storage(float deltalimit, float planethreshold, float zepsangle, bool planefiltration, bool perpendicularonly, bool noizefiltration) //float deltavalpercnt
+Storage::Storage(int uid, float deltalimit, float planethreshold, float zepsangle, bool planefiltration, bool perpendicularonly, bool noizefiltration) //float deltavalpercnt
 {
 	//LayerList = vector<StorageLayer>(0);
 	//ObjectList = vector<std::vector<StoredObject>>(0);
-
+	UID = uid;
 	deltaLimit = deltalimit;
 	DistanceThreshold = planethreshold;
 	zEpsAngle = zepsangle;
@@ -131,10 +131,6 @@ void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcl
 	}
 }
 
-void Storage::AddNewObject(StoredObject &newObject){ //Функция добавления нового объекта
-
-}
-
 void Storage::FindObjectForRemove(vector<StoredObject> objecteraserlist){ //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
 	objectIDForRemoveList.clear();
 
@@ -164,6 +160,10 @@ void Storage::RemoveObjects(){ //Функция удаления i-го объекта со склада
 	}
 }
 
-void Storage::AddNewLayer(StorageLayer newLayer){ //Функция добавления нового слоя
+void Storage::AddNewLayer(StorageLayer& newLayer){ //Функция добавления нового слоя
+	//FIXME
+}
 
+void Storage::AddNewObject(StoredObject& newObject){ //Функция добавления нового объекта
+	//FIXME
 }

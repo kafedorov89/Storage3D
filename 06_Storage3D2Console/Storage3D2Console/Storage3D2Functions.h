@@ -27,6 +27,8 @@ float object_maxz = 0.4;
 bool working_with_file = false;
 bool saving_state = false;
 
+using namespace std;
+
 void loadSettingsFile(){
 	//Loading settings file
 	ptree pt;
@@ -37,6 +39,8 @@ void loadSettingsFile(){
 		for (auto& key : section.second){
 			std::cout << key.first << "=" << key.second.get_value<std::string>() << "\n";
 			string fieldname = key.first;
+			if (key.first == "delta_limit")
+				delta_limit = key.second.get_value<float>();
 			if (key.first == "plane_threshold")
 				plane_threshold = key.second.get_value<float>();
 

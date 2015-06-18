@@ -5,10 +5,25 @@
 using namespace std;
 
 StorageLayer::StorageLayer(){ // онструктор класса StorageLayer
-	layerNegativeDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>); //ћассив типа <float> отрицательных разниц высот точек на данном слое по отношению к предыдущему
-	layerPositiveDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);  //ћассив типа <float> положительных разниц высот точек на данном слое по отношению к предыдущему 
+	layerNegativeDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>); 
+	layerPositiveDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
 	DepthMap = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
+
+	//objectForAddList = vector<StoredObject>();
+	//objectEraserList = vector<StoredObject>();
 }
+
+StorageLayer::StorageLayer(int layeruid, int storageuid){ // онструктор класса StorageLayer
+	layerNegativeDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
+	layerPositiveDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
+	DepthMap = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
+
+	//objectForAddList = vector<StoredObject>();
+	//objectEraserList = vector<StoredObject>();
+	UID = layeruid;
+	storageUID = storageuid;
+}
+
 StorageLayer::~StorageLayer(){
 
 }
@@ -56,11 +71,18 @@ void StorageLayer::FindObjectForAdd(float minx, float miny, float minz, float ma
 	float obj_size_limit[6] = { minx, miny, minz, maxx, maxy, maxz };
 
 	for (int i = 0; i < PositiveClasterList.size() - 1; i++){
-		StoredObject test_object = StoredObject(this->UID, PositiveClasterList[i], obj_size_limit);
+		
+		time_t rawtime;
+		time(&rawtime);
+		
+		StoredObject test_object = StoredObject(this->UID, this->storageUID, (int)rawtime, PositiveClasterList[i], obj_size_limit);
 		test_object.find_bbox();
-		if (test_object.isValid){
-			this->objectForAddList.push_back(test_object);
-		}
+		test_object.check_valid_object();
+
+		//if (test_object.isValid){
+		objectForAddList.push_back(test_object);
+		//}
+		//delete test_object;
 	}
 }
 

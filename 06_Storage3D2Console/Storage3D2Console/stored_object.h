@@ -84,7 +84,7 @@ public:
 
 	//Параметры связи объекта с другими сущностями склада
 	int UID; //Уникальный числовой идентификатор объекта
-	int StorageUID; //Уникальный идентификатор склада на который добавлен объект
+	int storageUID; //Уникальный идентификатор склада на который добавлен объект
 	int addedLayerID; //Идентификатор слоя на котором был добавлен объект
 	int removedLayerID; //идентификатор слоя на котором объект был удален
 
@@ -138,7 +138,7 @@ public:
 	//-----------------------------------------------------------------------------------------------
 	//Методы хранимого объекта
 	StoredObject();
-	StoredObject(int layerID, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float limit_array[6], int stepdegree = 10, int maxdegree = 90, float griddensity = 5.0f); //Конструктор класса Stored3Dobject
+	StoredObject(int layerid, int storageid, int uid, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float limit_array[6], int stepdegree = 10, int maxdegree = 90, float griddensity = 5.0f); //Конструктор класса Stored3Dobject
 	~StoredObject();
 
 	bool check_isinside_point(const pcl::PointXYZ &check_point);

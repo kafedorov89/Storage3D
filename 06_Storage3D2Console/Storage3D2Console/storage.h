@@ -71,16 +71,16 @@ public:
 
 	//----------------------------------------------------------------------------------------------
 	//Методы склада
-	Storage(float deltalimit = 0.06f, float planethreshold = 0.01f, float zepsangle = 0.01f, bool planefiltration = false, bool perpendicularonly = false, bool noizefiltration = true);// float deltavalpercnt = 0.7f
+	Storage(int uid,float deltalimit = 0.06f, float planethreshold = 0.01f, float zepsangle = 0.01f, bool planefiltration = false, bool perpendicularonly = false, bool noizefiltration = true);// float deltavalpercnt = 0.7f
 	~Storage();
 
 	void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcloud,
 		const pcl::PointCloud<pcl::PointXYZ>::Ptr &newcloud,
 		pcl::PointCloud<pcl::PointXYZ>::Ptr &delta_pos_cloud,
 		pcl::PointCloud<pcl::PointXYZ>::Ptr &delta_neg_cloud); //Функция вычисления Delta в реальных координатах для добавленного слоя
-	void AddNewObject(StoredObject &newObject); //Функция добавления нового объекта
+	void AddNewObject(StoredObject& newObject); //Функция добавления нового объекта
 	void FindObjectForRemove(vector<StoredObject> objecteraserlist); //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
 	void RemoveObjects(); //Функция удаления всех найденных объектов
 	void RemoveObject(int objectID); //Функция удаления i-го объекта со склада 
-	void AddNewLayer(StorageLayer newLayer); //Функция добавления нового слоя
+	void AddNewLayer(StorageLayer& newLayer); //Функция добавления нового слоя
 };

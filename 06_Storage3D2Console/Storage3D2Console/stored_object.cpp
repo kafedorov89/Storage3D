@@ -8,8 +8,12 @@ StoredObject::StoredObject(){
 
 }
 
-StoredObject::StoredObject(int layerID, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float limit_array[6], int stepdegree, int maxdegree, float griddensity)
+StoredObject::StoredObject(int layerid, int storageid, int uid, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float limit_array[6], int stepdegree, int maxdegree, float griddensity)
 {
+	addedLayerID = layerid;
+	storageUID = storageid;
+	UID = uid;
+	
 	width = FLT_MAX;
 	lenght = FLT_MAX;
 	height = FLT_MAX;
@@ -37,8 +41,8 @@ StoredObject::StoredObject(int layerID, pcl::PointCloud<pcl::PointXYZ>::Ptr clou
 
 	grid_density = griddensity;
 
-	find_bbox();
-	check_valid_object();
+	//find_bbox();
+	//check_valid_object();
 	//check_isinside_point(pcl::PointXYZ(0, 0, 0));
 }
 
