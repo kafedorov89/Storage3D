@@ -126,8 +126,8 @@ void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcl
 
 		//zEpsAngle
 		//DistanceThreshold
-		CloudPlaneFiltration(delta_pos_cloud, delta_pos_cloud);
-		CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud);
+		CloudPlaneFiltration(delta_pos_cloud, delta_pos_cloud, DistanceThreshold);
+		CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud, DistanceThreshold);
 	}
 }
 

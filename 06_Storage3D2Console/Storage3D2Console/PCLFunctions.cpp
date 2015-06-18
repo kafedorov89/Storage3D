@@ -16,7 +16,7 @@ void CloudNoizeFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, pcl::Point
 }
 
 void CloudPlaneFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
-	pcl::PointCloud<pcl::PointXYZ>::Ptr &planed_cloud){
+	pcl::PointCloud<pcl::PointXYZ>::Ptr &planed_cloud, float DistanceThreshold){
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud_tmp(new pcl::PointCloud<pcl::PointXYZ>);
 
@@ -30,7 +30,7 @@ void CloudPlaneFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
 	plane_seg.setModelType(pcl::SACMODEL_PLANE);
 	plane_seg.setMethodType(pcl::SAC_RANSAC);
 	plane_seg.setMaxIterations(1000);
-	plane_seg.setDistanceThreshold(0.03);
+	plane_seg.setDistanceThreshold(DistanceThreshold);
 	plane_seg.setInputCloud(cloud);
 	plane_seg.segment(*inliers, *coefficients);
 

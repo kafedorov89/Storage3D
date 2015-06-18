@@ -35,4 +35,4 @@ using namespace std;*/
 #include <pcl/filters/statistical_outlier_removal.h>
 
 void CloudNoizeFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr &filtered_cloud);
-void CloudPlaneFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr &planed_cloud);
+void CloudPlaneFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr &planed_cloud, float DistanceThreshold);
