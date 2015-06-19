@@ -62,6 +62,7 @@ using namespace std;
 class StorageLayer
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	//-----------------------------------------------------------------------------------------------
 	//Поля слоя
 	int UID; //Уникальный числовой идентификатор слоя
@@ -74,12 +75,13 @@ public:
 	vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> PositiveClasterList; //Кластеры найденные в облаке положительной дельты
 	vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> NegativeClasterList; //Кластеры найденные в облаке отрицательной дельты
 
-	vector<StoredObject> objectForAddList; //Массив типа <int> идентификаторов объектов добавленных на слое
-	vector<StoredObject> objectEraserList; //Массив объектов которые должны поглотить удаляемые объекты
+	vector<StoredObject*> objectForAddList; //Массив типа <int> идентификаторов объектов добавленных на слое
+	vector<StoredObject*> objectEraserList; //Массив объектов которые должны поглотить удаляемые объекты
 
 	//----------------------------------------------------------------------------------------------
 	//Методы слоя
 	StorageLayer(); //Конструктор класса StorageLayer
+	StorageLayer(const StorageLayer& storagelayer);
 	StorageLayer(int layeruid, int storageuid); //Конструктор класса StorageLayer
 	~StorageLayer();
 

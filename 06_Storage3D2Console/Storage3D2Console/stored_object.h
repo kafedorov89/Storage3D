@@ -79,6 +79,7 @@ class StoredObject
 	//-----------------------------------------------------------------------------------------------
 	//Поля хранимого объекта
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	//Параметры состояния объета
 	bool removed; //Флаг удаленного объекта
 
@@ -110,16 +111,17 @@ public:
 	//Moving to position
 	Eigen::Vector3f position;
 	Eigen::Quaternionf quaternion_to_bbox;
-	Eigen::Affine3f jump_to_bbox;
+	Eigen::Affine3f* jump_to_bbox;
+	//Moving to zero
+	Eigen::Affine3f* jump_to_zero;
 
 	//Object orientation to set to zero position
 	float roll;
 	float pitch;
 	float yaw;
 
-	//Moving to zero
-	Eigen::Affine3f jump_to_zero;
-
+	
+	
 	//Object size
 	float width;
 	float lenght;
@@ -138,6 +140,7 @@ public:
 	//-----------------------------------------------------------------------------------------------
 	//Методы хранимого объекта
 	StoredObject();
+	StoredObject::StoredObject(const StoredObject& storedobject);
 	StoredObject(int layerid, int storageid, int uid, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float limit_array[6], int stepdegree = 10, int maxdegree = 90, float griddensity = 5.0f); //Конструктор класса Stored3Dobject
 	~StoredObject();
 

@@ -1,0 +1,18 @@
+﻿bounding box works. why?
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Your branch is up-to-date with 'origin/master'.
+#
+# Changes to be committed:
+#	deleted:    "00_Storage3DCLI/database/SQLiteStudio/SQLiteStudio.exe - \320\257\321\200\320\273\321\213\320\272.lnk"
+#	modified:   00_Storage3DCLI/database/Storage3D.sqlite
+#	modified:   06_Storage3D2Console/Storage3D2Console/Storage3D2Console.cpp
+#	modified:   06_Storage3D2Console/Storage3D2Console/storage.cpp
+#	modified:   06_Storage3D2Console/Storage3D2Console/storage.h
+#	modified:   06_Storage3D2Console/Storage3D2Console/storage_layer.cpp
+#	modified:   06_Storage3D2Console/Storage3D2Console/storage_layer.h
+#	modified:   06_Storage3D2Console/Storage3D2Console/stored_object.cpp
+#	modified:   06_Storage3D2Console/Storage3D2Console/stored_object.h
+#
+

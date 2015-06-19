@@ -54,11 +54,12 @@ class Storage
 	//-----------------------------------------------------------------------------------------------
 	//Поля склада
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	int UID; //Уникальный числовой идентификатор склада
 	time_t CreatedDate; //Дата создания склада
 
-	vector<StorageLayer> LayerList; //Список слоев добавленных на склад
-	vector<StoredObject> ObjectList; //Список объектов добавленных на склад
+	vector<StorageLayer*> LayerList; //Список слоев добавленных на склад
+	vector<StoredObject*> ObjectList; //Список объектов добавленных на склад
 	vector<int> objectIDForRemoveList; //Массив типа <int> идентификаторов объектов отмеченных для удаления со склада
 
 	float deltaLimit; //Допуск на разницу между высотами слоев после которой значения из layerDelta считаются существенными

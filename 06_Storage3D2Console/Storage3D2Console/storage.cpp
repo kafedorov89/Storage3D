@@ -137,8 +137,9 @@ void Storage::FindObjectForRemove(vector<StoredObject> objecteraserlist){ //Функ
 	for (int i = 0; i < objecteraserlist.size() - 1; i++){
 		for (int k = 0; k < ObjectList.size() - 1; k++){
 			//Проверяем находится ли центр k-го объекта внутри i-го удаляющего объема  
-			if (objecteraserlist[i].check_isinside_point(pcl::PointXYZ(ObjectList[i].position(0), ObjectList[i].position(1), ObjectList[i].position(2)))){
-				objectIDForRemoveList.push_back(ObjectList[i].UID);
+			//if (objecteraserlist[i].check_isinside_point(pcl::PointXYZ(ObjectList[i]->position->x(), ObjectList[i]->position->y(), ObjectList[i]->position->z()))){
+			if (objecteraserlist[i].check_isinside_point(pcl::PointXYZ(ObjectList[i]->position(0), ObjectList[i]->position(1), ObjectList[i]->position(2)))){
+				objectIDForRemoveList.push_back(ObjectList[i]->UID);
 			}
 		}
 	}
@@ -151,7 +152,7 @@ void Storage::FindObjectForRemove(vector<StoredObject> objecteraserlist){ //Функ
 }
 
 void Storage::RemoveObject(int objectID){ //Функция удаления i-го объекта со склада 
-	ObjectList[objectID].Remove();
+	ObjectList[objectID]->Remove();
 }
 
 void Storage::RemoveObjects(){ //Функция удаления i-го объекта со склада 
@@ -160,10 +161,14 @@ void Storage::RemoveObjects(){ //Функция удаления i-го объекта со склада
 	}
 }
 
-void Storage::AddNewLayer(StorageLayer& newLayer){ //Функция добавления нового слоя
+void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового слоя
+	StorageLayer* newLayer = new StorageLayer(newlayer);
+	LayerList.push_back(newLayer);
 	//FIXME
 }
 
-void Storage::AddNewObject(StoredObject& newObject){ //Функция добавления нового объекта
+void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового объекта
+	StoredObject* newObject = new StoredObject(newobject);
+	ObjectList.push_back(newObject);
 	//FIXME
 }

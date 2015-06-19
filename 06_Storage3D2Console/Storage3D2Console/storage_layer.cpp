@@ -13,6 +13,20 @@ StorageLayer::StorageLayer(){ //Конструктор класса StorageLayer
 	//objectEraserList = vector<StoredObject>();
 }
 
+StorageLayer::StorageLayer(const StorageLayer& storagelayer){
+	UID = storagelayer.UID;
+	storageUID = storagelayer.storageUID;
+	AddedDate = storagelayer.AddedDate;
+	PositiveClasterList = storagelayer.PositiveClasterList;
+	NegativeClasterList = storagelayer.NegativeClasterList;
+	objectForAddList = storagelayer.objectForAddList;
+	objectEraserList = storagelayer.objectEraserList;
+
+	layerNegativeDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>(*storagelayer.layerNegativeDelta));
+	layerPositiveDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>(*storagelayer.layerPositiveDelta));
+	DepthMap = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>(*storagelayer.DepthMap));
+}
+
 StorageLayer::StorageLayer(int layeruid, int storageuid){ //Конструктор класса StorageLayer
 	layerNegativeDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
 	layerPositiveDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
@@ -44,14 +58,14 @@ void StorageLayer::FindClaster(pcl::PointCloud<pcl::PointXYZ>::Ptr deltacloud, v
 	ec.setInputCloud(deltacloud);
 	ec.extract(cluster_indices);*/
 
-	std::vector<pcl::PointIndices> cluster_indices;
-	pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-	ec.setClusterTolerance(tolerance);
-	ec.setMinClusterSize(minclastersize);
-	ec.setMaxClusterSize(maxclastersize);
-	ec.setSearchMethod(tree);
-	ec.setInputCloud(deltacloud);
-	ec.extract(cluster_indices);
+	vector<pcl::PointIndices> cluster_indices;
+	pcl::EuclideanClusterExtraction<pcl::PointXYZ>* ec = new pcl::EuclideanClusterExtraction<pcl::PointXYZ>();
+	ec->setClusterTolerance(tolerance);
+	ec->setMinClusterSize(minclastersize);
+	ec->setMaxClusterSize(maxclastersize);
+	ec->setSearchMethod(tree);
+	ec->setInputCloud(deltacloud);
+	ec->extract(cluster_indices);
 
 	int j = 0;
 	for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
@@ -65,19 +79,21 @@ void StorageLayer::FindClaster(pcl::PointCloud<pcl::PointXYZ>::Ptr deltacloud, v
 
 		clastervector.push_back(cloud_cluster);
 	}
+	
+	delete ec;
 }
 
 void StorageLayer::FindObjectForAdd(float minx, float miny, float minz, float maxx, float maxy, float maxz){ //Функция поиска объектов, добавленных на новом слое
 	float obj_size_limit[6] = { minx, miny, minz, maxx, maxy, maxz };
 
-	for (int i = 0; i < PositiveClasterList.size() - 1; i++){
+	for (int i = 0; i < PositiveClasterList.size(); i++){
 		
 		time_t rawtime;
 		time(&rawtime);
 		
-		StoredObject test_object = StoredObject(this->UID, this->storageUID, (int)rawtime, PositiveClasterList[i], obj_size_limit);
-		test_object.find_bbox();
-		test_object.check_valid_object();
+		StoredObject *test_object = new StoredObject(this->UID, this->storageUID, (int)rawtime, PositiveClasterList[i], obj_size_limit);
+		test_object->find_bbox();
+		test_object->check_valid_object();
 
 		//if (test_object.isValid){
 		objectForAddList.push_back(test_object);
