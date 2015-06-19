@@ -5,7 +5,7 @@
 //using namespace pcl;
 using namespace std;
 
-Storage::Storage(int uid, float deltalimit, float planethreshold, float zepsangle, bool planefiltration, bool perpendicularonly, bool noizefiltration) //float deltavalpercnt
+Storage::Storage(int uid, float deltalimit, float planethreshold, float zepsangle, bool planefiltration, bool perpendicularonly, bool noizefiltration, float voxeldensity) //float deltavalpercnt
 {
 	//LayerList = vector<StorageLayer>(0);
 	//ObjectList = vector<std::vector<StoredObject>>(0);
@@ -16,6 +16,7 @@ Storage::Storage(int uid, float deltalimit, float planethreshold, float zepsangl
 	planeFiltration = planefiltration;
 	perpendicularOnly = perpendicularonly;
 	noizeFiltration = noizefiltration;
+	voxelDensity = voxeldensity;
 	//deltaValidPercent = deltavalpercnt;
 }
 
@@ -41,13 +42,13 @@ void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcl
 
 	pcl::VoxelGrid<pcl::PointXYZ> old_vg;
 	old_vg.setInputCloud(oldcloud);
-	old_vg.setLeafSize(0.008f, 0.008f, 0.008f);
+	old_vg.setLeafSize(voxelDensity, voxelDensity, voxelDensity);
 	old_vg.filter(*voxel_old_cloud);
 	old_cloud.swap(voxel_old_cloud);
 
 	pcl::VoxelGrid<pcl::PointXYZ> new_vg;
 	new_vg.setInputCloud(newcloud);
-	new_vg.setLeafSize(0.008f, 0.008f, 0.008f); //FIXME. Need to create function with flexeble values for leaf cloud size (Cloud, Count point per dimentions -> BoundingBox -> dimentions -> setLeafSize -> LightCloud)
+	new_vg.setLeafSize(voxelDensity, voxelDensity, voxelDensity); //FIXME. Need to create function with flexeble values for leaf cloud size (Cloud, Count point per dimentions -> BoundingBox -> dimentions -> setLeafSize -> LightCloud)
 	new_vg.filter(*voxel_new_cloud);
 	new_cloud.swap(voxel_new_cloud);
 

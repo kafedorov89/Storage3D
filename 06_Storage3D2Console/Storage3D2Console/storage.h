@@ -69,10 +69,11 @@ public:
 	bool planeFiltration;
 	bool perpendicularOnly;
 	bool noizeFiltration;
+	float voxelDensity;
 
 	//----------------------------------------------------------------------------------------------
 	//Методы склада
-	Storage(int uid,float deltalimit = 0.06f, float planethreshold = 0.01f, float zepsangle = 0.01f, bool planefiltration = false, bool perpendicularonly = false, bool noizefiltration = true);// float deltavalpercnt = 0.7f
+	Storage(int uid, float deltalimit = 0.06f, float planethreshold = 0.01f, float zepsangle = 0.01f, bool planefiltration = false, bool perpendicularonly = false, bool noizefiltration = true, float voxeldensity = 0.008f);// float deltavalpercnt = 0.7f
 	~Storage();
 
 	void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcloud,

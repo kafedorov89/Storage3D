@@ -6,7 +6,7 @@
 #include "stdafx.h"
 #include "kinect_grabber.h"
 #include "storage.h"
-#include "Storage3D2Functions.h"
+#include "Storage3D2Settings.h"
 
 #define VK_S           0x53
 
@@ -24,7 +24,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	int layerUID = 0;
 
 	if (working_with_file){
-		string dirpath = "./experimental_pcd/";
+		string dirpath = "./pcd/experimental_pcd/";
 		DIR *dir = opendir(dirpath.c_str());
 
 		if (dir)
@@ -130,6 +130,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			storage->DistanceThreshold = plane_threshold;
 			storage->zEpsAngle = zepsangle;
 			storage->planeFiltration = planefiltration;
+			storage->voxelDensity = voxeldensity;
 
 			std::cout << "Adding new storage layer..." << std::endl;
 			delta_viewer->removeAllPointClouds();

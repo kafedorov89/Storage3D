@@ -26,6 +26,7 @@ float object_maxz = 0.4;
 
 bool working_with_file = false;
 bool saving_state = false;
+float voxel_density = 0.008f;
 
 using namespace std;
 
@@ -43,6 +44,9 @@ void loadSettingsFile(){
 				delta_limit = key.second.get_value<float>();
 			if (key.first == "plane_threshold")
 				plane_threshold = key.second.get_value<float>();
+			if (key.first == "voxel_density")
+				voxel_density = key.second.get_value<float>();
+			
 
 			if (key.first == "zepsangle")
 				zepsangle = key.second.get_value<float>();

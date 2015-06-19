@@ -36,11 +36,11 @@
     <ClInclude Include="kinect_grabber.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Storage3D2Functions.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="PCLFunctions.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Storage3D2Settings.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
