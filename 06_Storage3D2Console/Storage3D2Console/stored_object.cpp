@@ -37,6 +37,7 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	lenght_min = storedobject.lenght_min;
 	height_min = storedobject.height_min;
 	volume = storedobject.volume;
+	square = storedobject.square;
 
 	//position = new Eigen::Vector3f(*storedobject.position);
 	//quaternion_to_bbox = storedobject.quaternion_to_bbox;//new Eigen::Quaternionf(*storedobject.quaternion_to_bbox);
@@ -69,6 +70,7 @@ StoredObject::StoredObject(int layerid, int storageid, int uid, pcl::PointCloud<
 	height_max = limit_array[5];
 
 	volume = FLT_MAX;
+	square = FLT_MAX;
 
 	step_degree = stepdegree;
 	max_degree = maxdegree;
@@ -145,6 +147,7 @@ void StoredObject::find_bbox(){
 
 	float cur_z_height, cur_x_width, cur_y_lenght;// cur_xy_square;
 	float cur_volume;
+	float cur_square;
 
 	double cloud_point[3];
 
@@ -176,9 +179,13 @@ void StoredObject::find_bbox(){
 
 	int step_count = (int)((float)max_degree / (float)step_degree) * ((float)max_degree / (float)step_degree) * ((float)max_degree / (float)step_degree);
 	int i = 0;
+
+	int y_pitch = 0;
+	int x_roll = 0;
+
 	for (int z_yaw = 0; z_yaw < max_degree; z_yaw += step_degree){
-		for (int y_pitch = 0; y_pitch < max_degree; y_pitch += step_degree){
-			for (int x_roll = 0; x_roll < max_degree; x_roll += step_degree){
+		//for (int y_pitch = 0; y_pitch < max_degree; y_pitch += step_degree){
+			//for (int x_roll = 0; x_roll < max_degree; x_roll += step_degree){
 				i++;
 				std::cout << step_count - i << std::endl << std::endl;
 				Eigen::Affine3f* transform_rotate = new Eigen::Affine3f(pcl::getTransformation(0, 0, 0, DEG2RAD(x_roll), DEG2RAD(y_pitch), DEG2RAD(z_yaw)));
@@ -195,25 +202,28 @@ void StoredObject::find_bbox(){
 
 				cur_x_width = bBox->GetBound(1) - bBox->GetBound(0);
 				cur_y_lenght = bBox->GetBound(3) - bBox->GetBound(2);
-				cur_z_height = bBox->GetBound(5) - bBox->GetBound(4);
+				cur_z_height = bBox->GetBound(5) - bBox->GetBound(4); //FIXME. Calc one time before cycle
 
-				cur_volume = cur_x_width * cur_y_lenght * cur_z_height;
+				//cur_volume = cur_x_width * cur_y_lenght * cur_z_height;
+				cur_square = cur_x_width * cur_y_lenght;// *cur_z_height;
 
-				if (volume > cur_volume){
-					volume = cur_volume;
+				//if (volume > cur_volume){
+				if (square > cur_square){
+					square = cur_square;
+					//volume = cur_volume;
 
 					width = cur_x_width;
 					lenght = cur_y_lenght;
-					height = cur_z_height;
+					height = cur_z_height; //FIXME. Calc one time before cycle
 
-					roll = x_roll;
-					pitch = y_pitch;
+					//roll = x_roll;
+					//pitch = y_pitch;
 					yaw = z_yaw;
 				}
 
 				delete bBox;
-			}
-		}
+			//}
+		//}
 	}
 
 	jump_to_zero = new Eigen::Affine3f(pcl::getTransformation(-mass_center(0), -mass_center(1), -mass_center(2), DEG2RAD(roll), DEG2RAD(pitch), DEG2RAD(yaw)));
@@ -234,39 +244,10 @@ void StoredObject::find_bbox(){
 	rotational_matrix_OBB3f(2, 1) = rotational_matrix_OBB4f(9); //FIXME
 	rotational_matrix_OBB3f(2, 2) = rotational_matrix_OBB4f(10); //FIXME 
 
-	/*rotational_matrix_OBB3f[0] = rotational_matrix_OBB4f[0];
-	rotational_matrix_OBB3f[1] = rotational_matrix_OBB4f[1];
-	rotational_matrix_OBB3f[2] = rotational_matrix_OBB4f[2];
-	rotational_matrix_OBB3f[3] = rotational_matrix_OBB4f[4];
-	rotational_matrix_OBB3f[4] = rotational_matrix_OBB4f[5];
-	rotational_matrix_OBB3f[5] = rotational_matrix_OBB4f[6];
-	rotational_matrix_OBB3f[6] = rotational_matrix_OBB4f[8];
-	rotational_matrix_OBB3f[7] = rotational_matrix_OBB4f[9];
-	rotational_matrix_OBB3f[8] = rotational_matrix_OBB4f[10];*/
-
-	/**rotational_matrix_OBB3f << rotational_matrix_OBB4f[0], rotational_matrix_OBB4f[1], rotational_matrix_OBB4f[2],
-		rotational_matrix_OBB4f[4], rotational_matrix_OBB4f[5], rotational_matrix_OBB4f[6],
-		rotational_matrix_OBB4f[8], rotational_matrix_OBB4f[9], rotational_matrix_OBB4f[10];*/
-
-	/**rotational_matrix_OBB3f << rotational_matrix_OBB4f->eigenvalues[0], rotational_matrix_OBB4f->eigenvalues[1], rotational_matrix_OBB4f->eigenvalues[2],
-		rotational_matrix_OBB4f->eigenvalues[4], rotational_matrix_OBB4f->eigenvalues[5], rotational_matrix_OBB4f->eigenvalues[6],
-		rotational_matrix_OBB4f->eigenvalues[8], rotational_matrix_OBB4f->eigenvalues[9], rotational_matrix_OBB4f->eigenvalues[10];*/
-
-	/**rotational_matrix_OBB3f << rotational_matrix_OBB4f->eigenvalues(0), rotational_matrix_OBB4f->eigenvalues(1), rotational_matrix_OBB4f->eigenvalues(2),
-		rotational_matrix_OBB4f->eigenvalues(4), rotational_matrix_OBB4f->eigenvalues(5), rotational_matrix_OBB4f->eigenvalues(6),
-		rotational_matrix_OBB4f->eigenvalues(8), rotational_matrix_OBB4f->eigenvalues(9), rotational_matrix_OBB4f->eigenvalues(10);*/
-
-	/*rotational_matrix_OBB3f << rotational_matrix_OBB4f->eigenvalues()[0], rotational_matrix_OBB4f->eigenvalues()[1], rotational_matrix_OBB4f->eigenvalues()[2],
-		rotational_matrix_OBB4f->eigenvalues()[4], rotational_matrix_OBB4f->eigenvalues()[5], rotational_matrix_OBB4f->eigenvalues()[6],
-		rotational_matrix_OBB4f->eigenvalues()[8], rotational_matrix_OBB4f->eigenvalues()[9], rotational_matrix_OBB4f->eigenvalues()[10];*/
-
-	//position = new Eigen::Vector3f(mass_center->x(), mass_center->y(), mass_center->z());
-	//quaternion_to_bbox = new Eigen::Quaternionf(rotational_matrix_OBB3f); //FIXME
-
 	position = Eigen::Vector3f(mass_center(0), mass_center(1), mass_center(2));
 	quaternion_to_bbox = Eigen::Quaternionf(rotational_matrix_OBB3f); //FIXME
 
-	delete move_to_zero;
+	//delete move_to_zero;
 	delete boundingBox;
 	//delete rotational_matrix_OBB3f;
 	//delete rotational_matrix_OBB4f;

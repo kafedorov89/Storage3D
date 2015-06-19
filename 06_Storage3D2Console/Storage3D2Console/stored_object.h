@@ -102,7 +102,7 @@ public:
 	bool check_valid_object();
 	bool isValid;
 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud; //Массив типа хранящий реальные координаты всех точек объекта
+	pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud; //Массив хранящий реальные координаты всех точек объекта
 
 	int step_degree; //Step in degree for Searching optimal boundingbox
 	int max_degree; //Cout degree where searching optimal boundingbox
@@ -120,8 +120,6 @@ public:
 	float pitch;
 	float yaw;
 
-	
-	
 	//Object size
 	float width;
 	float lenght;
@@ -136,12 +134,13 @@ public:
 	float height_min;
 
 	float volume; //Volume of object
+	float square;
 
 	//-----------------------------------------------------------------------------------------------
 	//Методы хранимого объекта
 	StoredObject();
 	StoredObject::StoredObject(const StoredObject& storedobject);
-	StoredObject(int layerid, int storageid, int uid, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float limit_array[6], int stepdegree = 10, int maxdegree = 90, float griddensity = 5.0f); //Конструктор класса Stored3Dobject
+	StoredObject(int layerid, int storageid, int uid, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float limit_array[6], int stepdegree = 1, int maxdegree = 90, float griddensity = 5.0f); //Конструктор класса Stored3Dobject
 	~StoredObject();
 
 	bool check_isinside_point(const pcl::PointXYZ &check_point);

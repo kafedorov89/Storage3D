@@ -49,15 +49,6 @@ void StorageLayer::FindClaster(pcl::PointCloud<pcl::PointXYZ>::Ptr deltacloud, v
 	//tree->setInputCloud(cloud_filtered);
 	tree->setInputCloud(deltacloud);
 
-	/*std::vector<pcl::PointIndices> cluster_indices;
-	pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-	ec.setClusterTolerance(tolerance);
-	ec.setMinClusterSize(minclastersize);
-	ec.setMaxClusterSize(maxclastersize);
-	ec.setSearchMethod(tree);
-	ec.setInputCloud(deltacloud);
-	ec.extract(cluster_indices);*/
-
 	vector<pcl::PointIndices> cluster_indices;
 	pcl::EuclideanClusterExtraction<pcl::PointXYZ>* ec = new pcl::EuclideanClusterExtraction<pcl::PointXYZ>();
 	ec->setClusterTolerance(tolerance);
@@ -93,11 +84,11 @@ void StorageLayer::FindObjectForAdd(float minx, float miny, float minz, float ma
 		
 		StoredObject *test_object = new StoredObject(this->UID, this->storageUID, (int)rawtime, PositiveClasterList[i], obj_size_limit);
 		test_object->find_bbox();
-		test_object->check_valid_object();
+		test_object->isValid = test_object->check_valid_object();
 
-		//if (test_object.isValid){
-		objectForAddList.push_back(test_object);
-		//}
+		if (test_object->isValid){
+			objectForAddList.push_back(test_object);
+		}
 		//delete test_object;
 	}
 }

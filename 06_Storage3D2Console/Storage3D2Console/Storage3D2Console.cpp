@@ -113,7 +113,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	//pcl::PointCloud<pcl::PointXYZ>::Ptr old_cloud(new pcl::PointCloud<pcl::PointXYZ>); //Debug
 	//pcl::io::loadPCDFile("old_cloud.pcd", *old_cloud); //Debug
 
-
 	//Main cycle for listen keys press
 	while (true){
 		if (GetKeyState(VK_SPACE) < 0){
@@ -219,13 +218,21 @@ int _tmain(int argc, _TCHAR* argv[])
 			//Find objects for add
 			newlayer->FindObjectForAdd(object_minx, object_miny, object_minz, object_maxx, object_maxy, object_maxz);
 
-			std::cout << newlayer->objectForAddList.size() << "new objects was found." << std::endl;
-			std::cout << "Adding founded objects..." << std::endl;
-			//Add founded objects
 			
-			for (int i = 0; i < newlayer->objectForAddList.size(); i++){
-				storage->AddNewObject(*newlayer->objectForAddList[i]);
-				std::cout << i + 1 << "object was added" << std::endl;
+			
+			if (newlayer->objectForAddList.size() > 0)
+			{
+				std::cout << newlayer->objectForAddList.size() << " new objects was found." << std::endl;
+				std::cout << "Adding founded objects..." << std::endl;
+				//Add founded objects
+				for (int i = 0; i < newlayer->objectForAddList.size(); i++){
+					storage->AddNewObject(*newlayer->objectForAddList[i]);
+					std::cout << i + 1 << "object was added" << std::endl;
+
+				}
+			}
+			else{
+				std::cout << "Objects wasn't founded..." << std::endl;
 			}
 
 			//Find objects for remove
@@ -253,24 +260,28 @@ int _tmain(int argc, _TCHAR* argv[])
 			}*/
 
 			//Show actual and removed objects
-			for (int i = 0; i < storage->ObjectList.size() - 1; i++){
-				std::stringstream ss;
-				ss << "Actual objects" << i;
+			if (storage->ObjectList.size()){
+				for (int i = 0; i < storage->ObjectList.size(); i++){
+					std::stringstream ss;
+					ss << "Actual objects" << i;
 
-				pos_claster_viewer->addCube(storage->ObjectList[i]->position,
-					storage->ObjectList[i]->quaternion_to_bbox,
-					storage->ObjectList[i]->width,
-					storage->ObjectList[i]->lenght,
-					storage->ObjectList[i]->height, ss.str());
+					pos_claster_viewer->addCube(storage->ObjectList[i]->position,
+						storage->ObjectList[i]->quaternion_to_bbox,
+						storage->ObjectList[i]->width,
+						storage->ObjectList[i]->lenght,
+						storage->ObjectList[i]->height, ss.str());
 
-				/*if (!storage->ObjectList[i]->removed){
-					delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)255 / (float)255, (float)255 / (float)255, (float)255 / (float)255, ss.str());
+					/*if (!storage->ObjectList[i]->removed){
+						delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)255 / (float)255, (float)255 / (float)255, (float)255 / (float)255, ss.str());
+						}
+						else{
+						delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)0 / (float)255, (float)255 / (float)255, ss.str());
+						}*/
 				}
-				else{
-					delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)0 / (float)255, (float)255 / (float)255, ss.str());
-				}*/
 			}
-
+			else{
+				std::cout << "Storage haven't objects..." << std::endl;
+			}
 			delete newlayer;
 		}
 
