@@ -5,7 +5,7 @@
 //using namespace pcl;
 using namespace std;
 
-Storage::Storage(int uid, float deltalimit, float planethreshold, float zepsangle, bool planefiltration, bool perpendicularonly, bool noizefiltration, float voxeldensity) //float deltavalpercnt
+Storage::Storage(int uid, float deltalimit, float planethreshold, float zepsangle, bool enableplanefiltration, bool perpendicularonly, bool enablenoizefiltration, float voxeldensity, bool enablevoxelgrig) //float deltavalpercnt
 {
 	//LayerList = vector<StorageLayer>(0);
 	//ObjectList = vector<std::vector<StoredObject>>(0);
@@ -13,10 +13,11 @@ Storage::Storage(int uid, float deltalimit, float planethreshold, float zepsangl
 	deltaLimit = deltalimit;
 	DistanceThreshold = planethreshold;
 	zEpsAngle = zepsangle;
-	planeFiltration = planefiltration;
+	enablePlaneFiltration = enableplanefiltration;
 	perpendicularOnly = perpendicularonly;
-	noizeFiltration = noizefiltration;
+	enableNoizeFiltration = enablenoizefiltration;
 	voxelDensity = voxeldensity;
+	enableVoxelFiltration = enablevoxelgrig;
 	//deltaValidPercent = deltavalpercnt;
 }
 
@@ -24,34 +25,26 @@ Storage::~Storage()
 {
 }
 
-void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcloud,
-	const pcl::PointCloud<pcl::PointXYZ>::Ptr &newcloud,
-	pcl::PointCloud<pcl::PointXYZ>::Ptr &delta_pos_cloud,
-	pcl::PointCloud<pcl::PointXYZ>::Ptr &delta_neg_cloud){
-
+void Storage::CalcNewLayerDelta(){
 	//Initialization of point clouds source, target and two outputs
 	pcl::PointCloud<pcl::PointXYZ>::Ptr old_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr voxel_old_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXY>::Ptr old2d_cloud(new pcl::PointCloud<pcl::PointXY>);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr new_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr voxel_new_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXY>::Ptr delta2d_cloud(new pcl::PointCloud<pcl::PointXY>);
 
-	pcl::VoxelGrid<pcl::PointXYZ> old_vg;
-	old_vg.setInputCloud(oldcloud);
-	old_vg.setLeafSize(voxelDensity, voxelDensity, voxelDensity);
-	old_vg.filter(*voxel_old_cloud);
-	old_cloud.swap(voxel_old_cloud);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_pos_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_neg_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
-	pcl::VoxelGrid<pcl::PointXYZ> new_vg;
-	new_vg.setInputCloud(newcloud);
-	new_vg.setLeafSize(voxelDensity, voxelDensity, voxelDensity); //FIXME. Need to create function with flexeble values for leaf cloud size (Cloud, Count point per dimentions -> BoundingBox -> dimentions -> setLeafSize -> LightCloud)
-	new_vg.filter(*voxel_new_cloud);
-	new_cloud.swap(voxel_new_cloud);
+	//oldlayer->DepthMap, newlayer->DepthMap, newlayer->layerPositiveDelta, newlayer->layerNegativeDelta
 
+	int llSize = LayerList.size();
+
+	old_cloud = LayerList[llSize - 2]->DepthMap;
+	new_cloud = LayerList[llSize - 1]->DepthMap;
+	
 	//1. Segment differences 
 	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
 	//pcl::search::Octree<pcl::PointXYZ>::Ptr tree;// (new pcl::search::Octree(<pcl::PointXYZ>);
@@ -106,30 +99,18 @@ void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcl
 			{
 				if (deltaZ > 0){
 					delta_pos_cloud->push_back(delta_cloud->points[i]);
-					delta_pos_cloud->push_back(founded_old_point);
+					//delta_pos_cloud->push_back(founded_old_point);
 				}
 				else{
 					delta_neg_cloud->push_back(delta_cloud->points[i]);
-					delta_neg_cloud->push_back(founded_old_point);
+					//delta_neg_cloud->push_back(founded_old_point);
 				}
 			}
 		}
 	}
 
-	if (noizeFiltration)
-	{
-		CloudNoizeFiltration(delta_pos_cloud, delta_pos_cloud);
-		CloudNoizeFiltration(delta_neg_cloud, delta_neg_cloud);
-	}
-
-	if (planeFiltration)
-	{
-
-		//zEpsAngle
-		//DistanceThreshold
-		CloudPlaneFiltration(delta_pos_cloud, delta_pos_cloud, DistanceThreshold);
-		CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud, DistanceThreshold);
-	}
+	this->LayerList[llSize - 1]->layerPositiveDelta.swap(delta_pos_cloud);
+	this->LayerList[llSize - 1]->layerNegativeDelta.swap(delta_neg_cloud);
 }
 
 void Storage::FindObjectForRemove(vector<StoredObject> objecteraserlist){ //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
@@ -164,6 +145,16 @@ void Storage::RemoveObjects(){ //Функция удаления i-го объекта со склада
 
 void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового слоя
 	StorageLayer* newLayer = new StorageLayer(newlayer);
+	
+	if (enableVoxelFiltration)
+		VoxelGridFiltration(newlayer.DepthMap, newlayer.DepthMap, voxelDensity);
+
+	if (enableNoizeFiltration)
+		CloudNoizeFiltration(newlayer.DepthMap, newlayer.DepthMap);
+
+	if (enablePlaneFiltration)
+		CloudPlaneFiltration(newlayer.DepthMap, newlayer.DepthMap, DistanceThreshold);
+
 	LayerList.push_back(newLayer);
 	//FIXME
 }

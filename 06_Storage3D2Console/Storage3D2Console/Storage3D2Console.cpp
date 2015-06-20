@@ -7,6 +7,7 @@
 #include "kinect_grabber.h"
 #include "storage.h"
 #include "Storage3D2Settings.h"
+#include "PCLFunctions.h"
 
 #define VK_S           0x53
 
@@ -17,12 +18,30 @@ using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	//KinectGrabber grabber = KinectGrabber(0, false);
+	KinectGrab *grabber = new KinectGrab();
+	//Storage *storage = new Storage(delta_limit, plane_threshold);
+	Storage* storage = new Storage(1);
+
+	pcl::visualization::PCLVisualizer *delta_viewer = new pcl::visualization::PCLVisualizer("Delta Viewer");
+	//pcl::visualization::PCLVisualizer *pos_claster_viewer = new pcl::visualization::PCLVisualizer("Positive Claster Viewer");
+	//pcl::visualization::PCLVisualizer *neg_claster_viewer = new pcl::visualization::PCLVisualizer("Negative Claster Viewer");
+	
 	//Loading settings file first time
 	loadSettingsFile();
+
+	storage->deltaLimit = delta_limit;
+	storage->DistanceThreshold = plane_threshold;
+	storage->zEpsAngle = zepsangle;
+	storage->enablePlaneFiltration = enable_planefiltration;
+	storage->voxelDensity = voxel_density;
+	storage->enableVoxelFiltration = enable_voxelgridfiltration;
+	storage->enableNoizeFiltration = enable_noizefiltration;
 
 	vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> LayerFromFile;
 	int layerUID = 0;
 
+	//Loading files instead stream from 3D-scanner
 	if (working_with_file){
 		string dirpath = "./pcd/experimental_pcd/";
 		DIR *dir = opendir(dirpath.c_str());
@@ -52,10 +71,6 @@ int _tmain(int argc, _TCHAR* argv[])
 			cout << "Error opening directory" << endl;
 		}
 	}
-	
-	//vector<StoredObject> objects_list;
-	//KinectGrabber grabber = KinectGrabber(0, false);
-	KinectGrab *grabber = new KinectGrab();
 
 	try{
 		grabber = new KinectGrab(false);
@@ -67,26 +82,19 @@ int _tmain(int argc, _TCHAR* argv[])
 			return 0;
 	}
 
-	//Storage *storage = new Storage(delta_limit, plane_threshold);
-	Storage* storage = new Storage(1);
-
-	pcl::visualization::PCLVisualizer *delta_viewer = new pcl::visualization::PCLVisualizer("Delta Viewer");
-	pcl::visualization::PCLVisualizer *pos_claster_viewer = new pcl::visualization::PCLVisualizer("Positive Claster Viewer");
-	pcl::visualization::PCLVisualizer *neg_claster_viewer = new pcl::visualization::PCLVisualizer("Negative Claster Viewer");
-
 	delta_viewer->setBackgroundColor(0, 0, 0);
 	delta_viewer->addCoordinateSystem(1.0);
 	delta_viewer->loadCameraParameters("viewer.ini");
 	//delta_viewer->initCameraParameters();
 
-	pos_claster_viewer->setBackgroundColor(0, 0, 0);
+	/*pos_claster_viewer->setBackgroundColor(0, 0, 0); //DEBUG
 	pos_claster_viewer->addCoordinateSystem(1.0);
 	pos_claster_viewer->loadCameraParameters("viewer.ini");
 	//claster_viewer->initCameraParameters();
 
 	neg_claster_viewer->setBackgroundColor(0, 0, 0);
 	neg_claster_viewer->addCoordinateSystem(1.0);
-	neg_claster_viewer->loadCameraParameters("viewer.ini");
+	neg_claster_viewer->loadCameraParameters("viewer.ini");*/
 
 	//Grab layer
 	StorageLayer* oldlayer = new StorageLayer(layerUID, storage->UID);
@@ -107,21 +115,17 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	storage->AddNewLayer(*oldlayer);
-	
-	//grabber->stop();
-
-	//pcl::PointCloud<pcl::PointXYZ>::Ptr old_cloud(new pcl::PointCloud<pcl::PointXYZ>); //Debug
-	//pcl::io::loadPCDFile("old_cloud.pcd", *old_cloud); //Debug
 
 	//Main cycle for listen keys press
+	std::cout << "Ready for scan layers..." << std::endl;
 	while (true){
 		if (GetKeyState(VK_SPACE) < 0){
 			layerUID++;
 
 			//Set camera position in viewers windows
 			delta_viewer->loadCameraParameters("viewer.ini");
-			pos_claster_viewer->loadCameraParameters("viewer.ini");
-			neg_claster_viewer->loadCameraParameters("viewer.ini");
+			//pos_claster_viewer->loadCameraParameters("viewer.ini"); //DEBUG
+			//neg_claster_viewer->loadCameraParameters("viewer.ini"); //DEBUG
 
 			//Loading settings file again
 			loadSettingsFile();
@@ -129,16 +133,18 @@ int _tmain(int argc, _TCHAR* argv[])
 			storage->deltaLimit = delta_limit;
 			storage->DistanceThreshold = plane_threshold;
 			storage->zEpsAngle = zepsangle;
-			storage->planeFiltration = planefiltration;
-			storage->voxelDensity = voxeldensity;
+			storage->enablePlaneFiltration = enable_planefiltration;
+			storage->voxelDensity = voxel_density;
+			storage->enableVoxelFiltration = enable_voxelgridfiltration;
+			storage->enableNoizeFiltration = enable_noizefiltration;
 
 			std::cout << "Adding new storage layer..." << std::endl;
 			delta_viewer->removeAllPointClouds();
 			delta_viewer->removeAllShapes();
-			pos_claster_viewer->removeAllPointClouds();
-			pos_claster_viewer->removeAllShapes();
-			neg_claster_viewer->removeAllPointClouds();
-			neg_claster_viewer->removeAllShapes();
+			//pos_claster_viewer->removeAllPointClouds(); //DEBUG
+			//pos_claster_viewer->removeAllShapes(); //DEBUG
+			//neg_claster_viewer->removeAllPointClouds(); //DEBUG
+			//neg_claster_viewer->removeAllShapes(); //DEBUG
 
 			//Grab layer
 			StorageLayer* newlayer = new StorageLayer(layerUID, storage->UID);
@@ -151,27 +157,43 @@ int _tmain(int argc, _TCHAR* argv[])
 				newlayer->DepthMap = grabber->PointCloudXYZPtr;
 			}
 
-			//grabber.stop();
 			//Calc delta
 			storage->AddNewLayer(*newlayer);
 			std::cout << "Calcutating delta..." << std::endl;
-			storage->CalcNewLayerDelta(oldlayer->DepthMap, newlayer->DepthMap, newlayer->layerPositiveDelta, newlayer->layerNegativeDelta);
+			//storage->CalcNewLayerDelta(); //DEBUG
 			
 			if (saving_state){
 				newlayer->SaveLayerToPCD();
 			}
 			
+			//DEBUGGING ZONE
+			//Show depth of layer cloud
+			//delta_viewer->addPointCloud(storage->LayerList[storage->LayerList.size() - 1]->DepthMap, "depth_cloud", 0);
+			//delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)255 / (float)255, (float)255 / (float)255, (float)200 / (float)255, "depth_cloud");
+
+			pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud_tmp(new pcl::PointCloud<pcl::PointXYZ>);
+			pcl::PointCloud<pcl::PointXYZ>::Ptr trash_cloud_tmp(new pcl::PointCloud<pcl::PointXYZ>);
+			
+			CloudPlaneFiltrationPerp(storage->LayerList[storage->LayerList.size() - 1]->DepthMap, filtered_cloud_tmp, plane_threshold, zepsangle, false);
+			CloudPlaneFiltrationPerp(storage->LayerList[storage->LayerList.size() - 1]->DepthMap, trash_cloud_tmp, plane_threshold, zepsangle, true);
+			
+			delta_viewer->addPointCloud(filtered_cloud_tmp, "depth_cloud_plane", 0);
+			delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)255 / (float)255, (float)0 / (float)255, "depth_cloud_plane");
+			delta_viewer->addPointCloud(trash_cloud_tmp, "trash_cloud_plane", 0);
+			delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)255 / (float)255, (float)0 / (float)255, (float)0 / (float)255, "trash_cloud_plane");
+			//DEBUGGING ZONE
+
 			//Show positive delta cloud
-			delta_viewer->addPointCloud(newlayer->layerPositiveDelta, "delta_pos_cloud", 0);
-			delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)255 / (float)255, (float)0 / (float)255, "delta_pos_cloud");
+			//delta_viewer->addPointCloud(storage->LayerList[storage->LayerList.size()-1]->layerPositiveDelta, "delta_pos_cloud", 0); //DEBUG
+			//delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)255 / (float)255, (float)0 / (float)255, "delta_pos_cloud"); //DEBUG
 
 			//Show negative delta cloud
-			delta_viewer->addPointCloud(newlayer->layerNegativeDelta, "delta_neg_cloud", 0);
-			delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)255 / (float)255, (float)0 / (float)255, (float)0 / (float)255, "delta_neg_cloud");
+			//delta_viewer->addPointCloud(storage->LayerList[storage->LayerList.size() - 1]->layerNegativeDelta, "delta_neg_cloud", 0); //DEBUG
+			//delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)255 / (float)255, (float)0 / (float)255, (float)0 / (float)255, "delta_neg_cloud"); //DEBUG
 
-			oldlayer->DepthMap.swap(newlayer->DepthMap);
+			//oldlayer->DepthMap.swap(newlayer->DepthMap);
 
-			std::cout << "Finding positive clasters..." << std::endl;
+			//std::cout << "Finding positive clasters..." << std::endl;
 			//Extract clasters from positive delta
 			//int minpoints = (int)(newlayer->layerNegativeDelta->size() * relative_claster_min);
 			//int maxpoints = (int)(newlayer->layerNegativeDelta->size() * relative_claster_max);
@@ -179,7 +201,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			//int minpoints = (int)(newlayer->layerNegativeDelta->size() * relative_claster_min);
 			//int maxpoints = (int)(newlayer->layerNegativeDelta->size() * relative_claster_max);
 
-			StorageLayer::FindClaster(newlayer->layerPositiveDelta, newlayer->PositiveClasterList, claster_tolerance, minpoints, maxpoints);
+			/*StorageLayer::FindClaster(newlayer->layerPositiveDelta, newlayer->PositiveClasterList, claster_tolerance, minpoints, maxpoints); //DEBUG
 			std::cout << "Was found " << newlayer->PositiveClasterList.size() << " positive clasters." << std::endl;
 			
 			if (newlayer->PositiveClasterList.size() > 0){
@@ -234,7 +256,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else{
 				std::cout << "Objects wasn't founded..." << std::endl;
-			}
+			}*/
 
 			//Find objects for remove
 			//storage->FindObjectForRemove(newlayer->objectEraserList);
@@ -261,7 +283,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}*/
 
 			//Show actual and removed objects
-			if (storage->ObjectList.size()){
+			/*if (storage->ObjectList.size()){ //DEBUG
 				for (int i = 0; i < storage->ObjectList.size(); i++){
 					std::stringstream ss;
 					ss << "Actual objects" << i;
@@ -277,12 +299,12 @@ int _tmain(int argc, _TCHAR* argv[])
 						}
 						else{
 						delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)0 / (float)255, (float)255 / (float)255, ss.str());
-						}*/
+						}
 				}
 			}
 			else{
 				std::cout << "Storage haven't objects..." << std::endl;
-			}
+			}*/
 			delete newlayer;
 		}
 
@@ -297,8 +319,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 
 		delta_viewer->spinOnce();
-		pos_claster_viewer->spinOnce();
-		neg_claster_viewer->spinOnce();
+		//pos_claster_viewer->spinOnce(); //DEBUG
+		//neg_claster_viewer->spinOnce(); //DEBUG
 		boost::this_thread::sleep(boost::posix_time::microseconds(100));
 	}
 

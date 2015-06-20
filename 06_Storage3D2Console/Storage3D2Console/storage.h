@@ -66,20 +66,18 @@ public:
 	//float deltaValidPercent; // (0 - 1)Процент точек карты глубины с отрицательным значением Delta при котором объект будет удален
 	float DistanceThreshold;
 	float zEpsAngle;
-	bool planeFiltration;
+	bool enablePlaneFiltration; 
 	bool perpendicularOnly;
-	bool noizeFiltration;
+	bool enableNoizeFiltration;
 	float voxelDensity;
+	bool enableVoxelFiltration;
 
 	//----------------------------------------------------------------------------------------------
 	//Методы склада
-	Storage(int uid, float deltalimit = 0.06f, float planethreshold = 0.01f, float zepsangle = 0.01f, bool planefiltration = false, bool perpendicularonly = false, bool noizefiltration = true, float voxeldensity = 0.008f);// float deltavalpercnt = 0.7f
+	Storage(int uid, float deltalimit = 0.06f, float planethreshold = 0.01f, float zepsangle = 0.01f, bool enableplanefiltration = false, bool perpendicularonly = false, bool enablenoizefiltration = true, float voxeldensity = 0.008f, bool enableVoxelGrig = false);// float deltavalpercnt = 0.7f
 	~Storage();
 
-	void Storage::CalcNewLayerDelta(const pcl::PointCloud<pcl::PointXYZ>::Ptr &oldcloud,
-		const pcl::PointCloud<pcl::PointXYZ>::Ptr &newcloud,
-		pcl::PointCloud<pcl::PointXYZ>::Ptr &delta_pos_cloud,
-		pcl::PointCloud<pcl::PointXYZ>::Ptr &delta_neg_cloud); //Функция вычисления Delta в реальных координатах для добавленного слоя
+	void Storage::CalcNewLayerDelta(); //Функция вычисления Delta в реальных координатах для добавленного слоя
 	void AddNewObject(StoredObject& newObject); //Функция добавления нового объекта
 	void FindObjectForRemove(vector<StoredObject> objecteraserlist); //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
 	void RemoveObjects(); //Функция удаления всех найденных объектов

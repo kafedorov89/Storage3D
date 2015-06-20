@@ -7,9 +7,9 @@ using boost::property_tree::ptree;
 float delta_limit = 0.09;
 float plane_threshold = 0.001;
 float zepsangle = 0.1;
-bool planefiltration = false;
+bool enable_planefiltration = false;
 bool perpendicularonly = false;
-bool noizefiltration = false;
+bool enable_noizefiltration = false;
 
 float claster_tolerance = 0.08;
 //float relative_claster_min = 0.001;
@@ -27,6 +27,7 @@ float object_maxz = 0.4;
 bool working_with_file = false;
 bool saving_state = false;
 float voxel_density = 0.008f;
+bool enable_voxelgridfiltration = false;
 
 using namespace std;
 
@@ -46,16 +47,18 @@ void loadSettingsFile(){
 				plane_threshold = key.second.get_value<float>();
 			if (key.first == "voxel_density")
 				voxel_density = key.second.get_value<float>();
+			if (key.first == "enable_voxelgridfiltration")
+				enable_voxelgridfiltration = key.second.get_value<bool>();
 			
 
 			if (key.first == "zepsangle")
 				zepsangle = key.second.get_value<float>();
-			if (key.first == "planefiltration")
-				planefiltration = key.second.get_value<bool>();
+			if (key.first == "enable_planefiltration")
+				enable_planefiltration = key.second.get_value<bool>();
 			if (key.first == "perpendicularonly")
 				perpendicularonly = key.second.get_value<bool>();
-			if (key.first == "noizefiltration")
-				noizefiltration = key.second.get_value<bool>();
+			if (key.first == "enable_noizefiltration")
+				enable_noizefiltration = key.second.get_value<bool>();
 
 			if (key.first == "claster_tolerance")
 				claster_tolerance = key.second.get_value<float>();
