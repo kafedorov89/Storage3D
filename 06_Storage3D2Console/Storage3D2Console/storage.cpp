@@ -5,20 +5,17 @@
 //using namespace pcl;
 using namespace std;
 
-Storage::Storage(int uid, float deltalimit, float planethreshold, float zepsangle, bool enableplanefiltration, bool perpendicularonly, bool enablenoizefiltration, float voxeldensity, bool enablevoxelgrig) //float deltavalpercnt
+Storage::Storage(int uid,
+	float deltalimit,
+	bool enablevoxelfiltration,
+	bool enableplanefiltration,
+	bool enablenoizefiltration)
 {
-	//LayerList = vector<StorageLayer>(0);
-	//ObjectList = vector<std::vector<StoredObject>>(0);
 	UID = uid;
 	deltaLimit = deltalimit;
-	DistanceThreshold = planethreshold;
-	zEpsAngle = zepsangle;
+	enableVoxelFiltration = enablevoxelfiltration;
 	enablePlaneFiltration = enableplanefiltration;
-	perpendicularOnly = perpendicularonly;
 	enableNoizeFiltration = enablenoizefiltration;
-	voxelDensity = voxeldensity;
-	enableVoxelFiltration = enablevoxelgrig;
-	//deltaValidPercent = deltavalpercnt;
 }
 
 Storage::~Storage()
@@ -31,9 +28,7 @@ void Storage::CalcNewLayerDelta(){
 	pcl::PointCloud<pcl::PointXY>::Ptr old2d_cloud(new pcl::PointCloud<pcl::PointXY>);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr new_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-
 	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXY>::Ptr delta2d_cloud(new pcl::PointCloud<pcl::PointXY>);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_pos_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr delta_neg_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -45,72 +40,46 @@ void Storage::CalcNewLayerDelta(){
 	old_cloud = LayerList[llSize - 2]->DepthMap;
 	new_cloud = LayerList[llSize - 1]->DepthMap;
 	
-	//1. Segment differences 
-	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-	//pcl::search::Octree<pcl::PointXYZ>::Ptr tree;// (new pcl::search::Octree(<pcl::PointXYZ>);
-	pcl::SegmentDifferences<pcl::PointXYZ> sdiff;
-	sdiff.setInputCloud(new_cloud);
-	sdiff.setTargetCloud(old_cloud);
-	sdiff.setSearchMethod(tree);
-	sdiff.setDistanceThreshold(0); //PARAMETR?
-	sdiff.segment(*delta_cloud);
+	Get2DCloudFrom3D(old_cloud, old2d_cloud);
 
-	std::cout << *delta_cloud << std::endl;
-
-	//2D - variant
-	//Convert old cloud to 2d-cloud
-	for (int i = 0; i < old_cloud->size() - 1; i++){
-		pcl::PointXY old2d_Point;
-		old2d_Point.x = old_cloud->points[i].x;
-		old2d_Point.y = old_cloud->points[i].y;
-		old2d_cloud->push_back(old2d_Point);
-	}
-
-	//Convert delta cloud to 2d-cloud
-	for (int i = 0; i < delta_cloud->size() - 1; i++){
-		pcl::PointXY delta2d_Point;
-		delta2d_Point.x = delta_cloud->points[i].x;
-		delta2d_Point.y = delta_cloud->points[i].y;
-		delta2d_cloud->push_back(delta2d_Point);
-	}
-
-	//std::vector<int> delta_indices = vector<int>();
-	std::vector<int> delta_pos_indices = vector<int>();
-	std::vector<int> delta_neg_indices = vector<int>();
 	pcl::KdTreeFLANN<pcl::PointXY> kdtree;
 	kdtree.setInputCloud(old2d_cloud);
-
-	float deltaZ; //Lenght between pair of points from delta_cloud and old_cloud
+	
+	float deltaZ = 0; //Lenght between pair of points from delta_cloud and old_cloud
+	int oldPointIndex = 0;
 	//Finding pair points for delta2d cloud in old2d cloud
-	for (int i = 0; i < delta2d_cloud->size() - 1; i++){
-		pcl::PointXY searchPoint;
-		searchPoint.x = delta2d_cloud->points[i].x,
-			searchPoint.y = delta2d_cloud->points[i].y;
+	for (int i = 0; i < new_cloud->size(); i++){
+		deltaZ = GetPointDelatZ(new_cloud->points[i], old2d_cloud, old_cloud, kdtree, oldPointIndex);
 
-		std::vector<int> pointId_vector; //Vector with 1 lenght for save index of nearest point in old_cloud
-		std::vector<float> pointRadius_vector;
-
-		if (kdtree.nearestKSearch(searchPoint, 1, pointId_vector, pointRadius_vector) > 0)
-		{
-			pcl::PointXYZ founded_old_point = old_cloud->points[pointId_vector[0]];
-			deltaZ = founded_old_point.z - delta_cloud->points[i].z; //Keep that axiz oZ is inverted (goes from up to down)
-
-			if (std::abs(deltaZ) > deltaLimit)
-			{
-				if (deltaZ > 0){
-					delta_pos_cloud->push_back(delta_cloud->points[i]);
-					//delta_pos_cloud->push_back(founded_old_point);
-				}
-				else{
-					delta_neg_cloud->push_back(delta_cloud->points[i]);
-					//delta_neg_cloud->push_back(founded_old_point);
-				}
+		if (std::abs(deltaZ) >= deltaLimit){
+			if (deltaZ > 0){
+				delta_pos_cloud->push_back(old_cloud->points[oldPointIndex]);
+			}
+			else{
+				delta_neg_cloud->push_back(old_cloud->points[oldPointIndex]);
 			}
 		}
 	}
 
-	this->LayerList[llSize - 1]->layerPositiveDelta.swap(delta_pos_cloud);
-	this->LayerList[llSize - 1]->layerNegativeDelta.swap(delta_neg_cloud);
+	//Auto calculation claster's parameters
+	float cur_voxelDensity = LayerList[llSize - 1]->planeDensity;
+	float CloudZStep = 1.5 * deltaLimit;
+	float posPlaneClasterTollerance = 2 * cur_voxelDensity;
+	int posMinPlaneClasterSize = (int) (0.5 * (((float)ObjectLimitSize[0] / (float)cur_voxelDensity) * ((float)ObjectLimitSize[1] / (float)cur_voxelDensity)));
+	int posMaxPlaneClasterSize = (int) (5 * (((float)ObjectLimitSize[3] / (float)cur_voxelDensity) * ((float)ObjectLimitSize[4] / (float)cur_voxelDensity)));
+
+	float negPlaneClasterTollerance = cur_voxelDensity;
+	int negMinPlaneClasterSize = posMinPlaneClasterSize;
+	int negMaxPlaneClasterSize = posMaxPlaneClasterSize;
+
+	if (enablePlaneFiltration){
+		//CloudPlaneFiltration(newlayer.DepthMap, newlayer.DepthMap, DistanceThreshold);
+		CloudPlaneFiltration(delta_pos_cloud, delta_pos_cloud, posPlaneClasterTollerance, posMinPlaneClasterSize, posMaxPlaneClasterSize, CloudZStep);
+		CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud, negPlaneClasterTollerance, negMinPlaneClasterSize, negMaxPlaneClasterSize, CloudZStep);
+	}
+	
+	LayerList[llSize - 1]->layerPositiveDelta.swap(delta_pos_cloud);
+	LayerList[llSize - 1]->layerNegativeDelta.swap(delta_neg_cloud);
 }
 
 void Storage::FindObjectForRemove(vector<StoredObject> objecteraserlist){ //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
@@ -144,19 +113,83 @@ void Storage::RemoveObjects(){ //Функция удаления i-го объекта со склада
 }
 
 void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового слоя
-	StorageLayer* newLayer = new StorageLayer(newlayer);
+	StorageLayer* new_Layer = new StorageLayer(newlayer);
 	
 	if (enableVoxelFiltration)
-		VoxelGridFiltration(newlayer.DepthMap, newlayer.DepthMap, voxelDensity);
+		VoxelGridFiltration(new_Layer->DepthMap, new_Layer->DepthMap, new_Layer->planeDensity);
 
 	if (enableNoizeFiltration)
-		CloudNoizeFiltration(newlayer.DepthMap, newlayer.DepthMap);
+		CloudNoizeFiltration(new_Layer->DepthMap, new_Layer->DepthMap);
 
-	if (enablePlaneFiltration)
-		CloudPlaneFiltration(newlayer.DepthMap, newlayer.DepthMap, DistanceThreshold);
-
-	LayerList.push_back(newLayer);
+	LayerList.push_back(new_Layer);
 	//FIXME
+}
+
+
+void Storage::FindObjectForAdd(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов, добавленных на новом слое
+	//int llSize = LayerList.size();
+	
+	for (int i = 0; i < LayerList[curLayerUID]->PositiveClasterList.size(); i++){
+		
+		time_t rawtime;
+		time(&rawtime);
+
+		StoredObject *test_object = new StoredObject(LayerList[curLayerUID]->UID, UID, (int)rawtime, LayerList[curLayerUID]->PositiveClasterList[i], 1, 180, objectdensity);
+		
+		//Finding up cover of 2d_object
+		test_object->find_bbox();
+		
+		//Check length and width of 2d_object
+		test_object->check_2d_valid_object(ObjectLimitSize, valid_percent);
+		
+		if (test_object->isValid){
+			//Check height in position (center) point
+			pcl::PointCloud<pcl::PointXY>::Ptr oldcloud2d(new pcl::PointCloud<pcl::PointXY>);
+			Get2DCloudFrom3D(LayerList[curLayerUID - 1]->DepthMap, oldcloud2d);
+
+			pcl::KdTreeFLANN<pcl::PointXY> kdtree;
+			kdtree.setInputCloud(oldcloud2d);
+
+			pcl::PointXYZ *testPoint = new pcl::PointXYZ();
+			testPoint->x = test_object->position(0);
+			testPoint->y = test_object->position(1);
+			testPoint->z = test_object->position(2);
+			
+			//int oldpointindex;
+
+			//float center_height = GetPointDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, oldpointindex);
+			float center_height = GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 40);
+
+			if (center_height < ObjectLimitSize[2]){
+				test_object->isValid = false;
+				//Find several or one object
+			}
+			else if (center_height > ObjectLimitSize[2] && center_height < ObjectLimitSize[5]){
+				test_object->isValid = false;
+				test_object->height = center_height;
+				LayerList[curLayerUID]->objectForAddList.push_back(test_object);
+			}
+			else if (center_height > ObjectLimitSize[5])
+			{
+				//int obj_count //Manual settings of obj_count or obj_height 
+				//std::cin >> obj_count;
+				test_object->isGroup = true;
+				int obj_count = (float)center_height / (float)ObjectLimitSize[2]; //FIXME. Возможна набегающая погрешность при большом количестве объектов и одновременно большом диапозоне между maxz = ObjectLimitSize[5] и minz = ObjectLimitSize[2]
+				float zero_level = testPoint->z - center_height;
+				float obj_height = center_height / obj_count;
+
+				for (int k = 0; k < obj_count; k++){
+					time(&rawtime);
+
+					StoredObject *k_object = new StoredObject(*test_object);
+					k_object->UID = (int)rawtime;
+					k_object->height = obj_height;
+					k_object->position(2) = zero_level + obj_height * 0.5 + k * obj_height;
+					LayerList[curLayerUID]->objectForAddList.push_back(k_object);
+				}
+			}
+		}
+	}
 }
 
 void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового объекта

@@ -72,6 +72,8 @@
 #include <vtkOBBTree.h>
 #include <pcl/filters/voxel_grid.h>
 
+#include "PCLFunctions.h"
+
 using namespace std;
 
 class StoredObject
@@ -99,14 +101,13 @@ public:
 	//-----------------------------------------------------------------------------------------------
 	//Геометрические параметры объекта
 	//Validation object
-	bool check_valid_object();
+	
 	bool isValid;
-
 	pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud; //Массив хранящий реальные координаты всех точек объекта
 
 	int step_degree; //Step in degree for Searching optimal boundingbox
 	int max_degree; //Cout degree where searching optimal boundingbox
-	float grid_density; //Count of point cloud grid in x, y, z dimentions
+	float objectDensity; //Count of point cloud grid in x, y, z dimentions
 
 	//Moving to position
 	Eigen::Vector3f position;
@@ -124,25 +125,25 @@ public:
 	float width;
 	float lenght;
 	float height;
+	bool isGroup;
 
-	//Object size limit
-	float width_max;
-	float lenght_max;
-	float height_max;
-	float width_min;
-	float lenght_min;
-	float height_min;
-
-	float volume; //Volume of object
 	float square;
 
 	//-----------------------------------------------------------------------------------------------
 	//Методы хранимого объекта
 	StoredObject();
 	StoredObject::StoredObject(const StoredObject& storedobject);
-	StoredObject(int layerid, int storageid, int uid, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float limit_array[6], int stepdegree = 1, int maxdegree = 90, float griddensity = 5.0f); //Конструктор класса Stored3Dobject
+	StoredObject(int layerid, 
+		int storageid, 
+		int uid, 
+		pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, 
+		int stepdegree = 1, 
+		int maxdegree = 90, 
+		float objectdensity = 0.02f); //Конструктор класса Stored3Dobject
 	~StoredObject();
 
+	void check_2d_valid_object(float limit_array[6], float valid_percent);
+	//void check_3d_valid_object(float limit_array[6]);
 	bool check_isinside_point(const pcl::PointXYZ &check_point);
 	void find_bbox(); //Finding BoundingBox
 	void Remove();

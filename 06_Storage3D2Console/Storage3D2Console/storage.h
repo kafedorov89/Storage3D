@@ -64,17 +64,25 @@ public:
 
 	float deltaLimit; //Допуск на разницу между высотами слоев после которой значения из layerDelta считаются существенными
 	//float deltaValidPercent; // (0 - 1)Процент точек карты глубины с отрицательным значением Delta при котором объект будет удален
-	float DistanceThreshold;
-	float zEpsAngle;
 	bool enablePlaneFiltration; 
-	bool perpendicularOnly;
 	bool enableNoizeFiltration;
-	float voxelDensity;
 	bool enableVoxelFiltration;
+
+
+	float PlaneClasterTollerance;
+	int MinPlaneClasterSize;
+	int MaxPlaneClasterSize;
+	float CloudZStep;
+
+	float ObjectLimitSize[6];
 
 	//----------------------------------------------------------------------------------------------
 	//Методы склада
-	Storage(int uid, float deltalimit = 0.06f, float planethreshold = 0.01f, float zepsangle = 0.01f, bool enableplanefiltration = false, bool perpendicularonly = false, bool enablenoizefiltration = true, float voxeldensity = 0.008f, bool enableVoxelGrig = false);// float deltavalpercnt = 0.7f
+	Storage(int uid,
+		float deltalimit,
+		bool enablevoxelfiltration,
+		bool enableplanefiltration,
+		bool enablenoizefiltration);
 	~Storage();
 
 	void Storage::CalcNewLayerDelta(); //Функция вычисления Delta в реальных координатах для добавленного слоя
@@ -82,5 +90,6 @@ public:
 	void FindObjectForRemove(vector<StoredObject> objecteraserlist); //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
 	void RemoveObjects(); //Функция удаления всех найденных объектов
 	void RemoveObject(int objectID); //Функция удаления i-го объекта со склада 
+	void FindObjectForAdd(int LayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция поиска объектов, добавленных на новом слое
 	void AddNewLayer(StorageLayer& newLayer); //Функция добавления нового слоя
 };
