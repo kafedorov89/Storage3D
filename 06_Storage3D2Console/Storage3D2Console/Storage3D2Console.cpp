@@ -279,6 +279,11 @@ int _tmain(int argc, _TCHAR* argv[])
 					std::stringstream ss;
 					ss << "Actual_objects_" << i;
 
+					std::cout << "Position: " << std::endl << "x " << storage->ObjectList[i]->position(0) << std::endl << "y " << storage->ObjectList[i]->position(1) << std::endl << "z " << storage->ObjectList[i]->position(2) << std::endl;
+					std::cout << "width: " << storage->ObjectList[i]->width << std::endl;
+					std::cout << "lenght: " << storage->ObjectList[i]->lenght << std::endl;
+					std::cout << "height: " << storage->ObjectList[i]->height << std::endl;
+
 					pos_claster_viewer->addCube(storage->ObjectList[i]->position,
 						storage->ObjectList[i]->quaternion_to_bbox,
 						storage->ObjectList[i]->width,

@@ -162,43 +162,51 @@ void Storage::FindObjectForAdd(int curLayerUID, float valid_percent, int nearest
 
 			pcl::PointXYZ *testPoint = new pcl::PointXYZ();
 			
+			//Getting test point with max Z coordinate
 			testPoint->x = test_object->position(0);
 			testPoint->y = test_object->position(1);
-			testPoint->z = test_object->position(2) - 0.5 * test_object->height; //Minus because oZ axis is up side down
+			testPoint->z = test_object->position(2) - 0.5 * test_object->height; //Minus (-) because oZ axis is up side down
 			
-			LayerList[curLayerUID]->objectForAddList.push_back(test_object); //DEBUG
+			//LayerList[curLayerUID]->objectForAddList.push_back(test_object); //DEBUG
 
 			//int oldpointindex;
 
 			//float center_height = GetPointDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, oldpointindex);
-			float center_height = GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 40);
+			float center_height = GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
 			std::cout << "Approximate height = " << center_height << std::endl;
 
+			//Less than one object 
 			if (center_height < ObjectLimitSize[2]){
 				test_object->isValid = false;
 				//Find several or one object
 			}
+			//About one object
 			else if (center_height > ObjectLimitSize[2] && center_height < ObjectLimitSize[5]){
-				test_object->isValid = false;
+				test_object->isValid = true;
+				test_object->position(2) += center_height * 0.5 - 0.5 * test_object->height; //Plus (+) because oZ axis is up side down
 				test_object->height = center_height;
 				LayerList[curLayerUID]->objectForAddList.push_back(test_object);
 			}
+			//Several objects
 			else if (center_height > ObjectLimitSize[5])
 			{
-				//int obj_count //Manual settings of obj_count or obj_height 
+				//Manual settings of obj_count or obj_height 
+				//int obj_count 
 				//std::cin >> obj_count;
+
 				test_object->isGroup = true;
 				int obj_count = (float)center_height / (float)ObjectLimitSize[2]; //FIXME. ¬озможна набегающа€ погрешность при большом количестве объектов и одновременно большом диапозоне между maxz = ObjectLimitSize[5] и minz = ObjectLimitSize[2]
-				float zero_level = testPoint->z - center_height;
+				float zero_level = testPoint->z + center_height; //Plus (+) because oZ axis is up side down
 				float obj_height = center_height / obj_count;
 
 				for (int k = 0; k < obj_count; k++){
 					time(&rawtime);
 
 					StoredObject *k_object = new StoredObject(*test_object);
+					k_object->isValid = true;
 					k_object->UID = (int)rawtime;
 					k_object->height = obj_height;
-					k_object->position(2) = zero_level + obj_height * 0.5 + k * obj_height;
+					k_object->position(2) = zero_level - obj_height * 0.5 - k * obj_height; //Minus (-) because oZ axis is up side down
 					LayerList[curLayerUID]->objectForAddList.push_back(k_object);
 				}
 			}
