@@ -230,9 +230,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			
 
 			std::cout << "Finding objects for add..." << std::endl;
-			//Find objects for add
+			//Find objects
 			
-			storage->FindObjectForAdd(storage->LayerList.size() - 1, valid_percent, nearest_point_count, object_density);
+			storage->FindObjects(storage->LayerList.size() - 1, valid_percent, nearest_point_count, object_density);
 			
 			if (storage->LayerList[storage->LayerList.size() - 1]->objectForAddList.size() > 0)
 			{
@@ -249,8 +249,23 @@ int _tmain(int argc, _TCHAR* argv[])
 				std::cout << "Objects wasn't founded..." << std::endl;
 			}
 
-			//Find objects for remove
-			//storage->FindObjectForRemove(newlayer->objectEraserList);
+			//Find removers
+			storage->FindRemovers(storage->LayerList.size() - 1, valid_percent, nearest_point_count, object_density);
+
+			if (storage->LayerList[storage->LayerList.size() - 1]->objectEraserList.size() > 0)
+			{
+				std::cout << storage->LayerList[storage->LayerList.size() - 1]->objectEraserList.size() << " new eraser was found." << std::endl;
+				std::cout << "Adding founded eraser..." << std::endl;
+				//Add founded objects
+				for (int i = 0; i < storage->LayerList[storage->LayerList.size() - 1]->objectEraserList.size(); i++){
+					storage->AddNewObject(*storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i]);
+					std::cout << i + 1 << "object was added" << std::endl;
+
+				}
+			}
+			else{
+				std::cout << "Objects wasn't founded..." << std::endl;
+			}
 
 			//Remove founded objects
 			//storage->RemoveObjects();
@@ -258,20 +273,20 @@ int _tmain(int argc, _TCHAR* argv[])
 			//viewer.setBackgroundColor(0, 0, 0);
 			//viewer.addCoordinateSystem(1.0);
 			//viewer.initCameraParameters();
-			/*std::cout << "Refreshing visualization..." << std::endl;
+			std::cout << "Refreshing visualization..." << std::endl;
 
 			//Show erasers
-			for (int i = 0; i < newlayer->objectEraserList.size() - 1; i++){
+			for (int i = 0; i < storage->LayerList[storage->LayerList.size() - 1]->objectEraserList.size() - 1; i++){
 			std::stringstream ss;
 			ss << "Eraser" << i;
 
-			viewer.addCube(newlayer->objectEraserList[i].position,
-			newlayer->objectEraserList[i].quaternion_to_bbox,
-			newlayer->objectEraserList[i].width,
-			newlayer->objectEraserList[i].lenght,
-			newlayer->objectEraserList[i].height, ss.str());
-			viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)200 / (float)255, (float)0 / (float)255, (float)0 / (float)255, ss.str());
-			}*/
+			neg_claster_viewer->addCube(storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].position,
+				storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].quaternion_to_bbox,
+				storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].width,
+				storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].lenght,
+				storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].height, ss.str());
+			neg_claster_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)200 / (float)255, (float)0 / (float)255, (float)0 / (float)255, ss.str());
+			}
 
 			//Show actual and removed objects
  			if (storage->ObjectList.size()){ //DEBUG

@@ -92,8 +92,46 @@ void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClaste
 	LayerList[llSize - 1]->layerNegativeDelta.swap(delta_neg_cloud);
 }
 
-void Storage::FindObjectForRemove(vector<StoredObject> objecteraserlist){ //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
+void Storage::FindRemovers(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
+	//int llSize = LayerList.size();
+
+	for (int i = 0; i < LayerList[curLayerUID]->PositiveClasterList.size(); i++){
+
+		time_t rawtime;
+		time(&rawtime);
+
+		StoredObject *test_remover = new StoredObject(LayerList[curLayerUID]->UID, UID, (int)rawtime, LayerList[curLayerUID]->PositiveClasterList[i], 1, 180, objectdensity);
+
+		//Finding up cover of 2d_object
+		test_remover->find_bbox();
+
+		//Check length and width of 2d_object
+		test_remover->check_2d_valid_object(ObjectLimitSize, valid_percent);
+
+		if (test_remover->isValid){
+			//Check height in position (center) point
+			pcl::PointCloud<pcl::PointXY>::Ptr oldcloud2d(new pcl::PointCloud<pcl::PointXY>);
+			Get2DCloudFrom3D(LayerList[curLayerUID - 1]->DepthMap, oldcloud2d);
+
+			pcl::KdTreeFLANN<pcl::PointXY> kdtree;
+			kdtree.setInputCloud(oldcloud2d);
+
+			pcl::PointXYZ *testPoint = new pcl::PointXYZ();
+
+			//Getting test point with max Z coordinate
+			testPoint->x = test_remover->position(0);
+			testPoint->y = test_remover->position(1);
+			testPoint->z = test_remover->position(2) - 0.5 * test_remover->height; //Minus (-) because oZ axis is up side down
+
+			float center_height = GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
+			std::cout << "Approximate height = " << center_height << std::endl;
+		}
+	}
+	
 	objectIDForRemoveList.clear();
+
+	objectEraserList.
+
 
 	for (int i = 0; i < objecteraserlist.size() - 1; i++){
 		for (int k = 0; k < ObjectList.size() - 1; k++){
@@ -136,7 +174,7 @@ void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового с
 }
 
 
-void Storage::FindObjectForAdd(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов, добавленных на новом слое
+void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов, добавленных на новом слое
 	//int llSize = LayerList.size();
 	
 	for (int i = 0; i < LayerList[curLayerUID]->PositiveClasterList.size(); i++){

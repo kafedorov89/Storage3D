@@ -87,9 +87,9 @@ public:
 
 	void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep); //Функция вычисления Delta в реальных координатах для добавленного слоя
 	void AddNewObject(StoredObject& newObject); //Функция добавления нового объекта
-	void FindObjectForRemove(vector<StoredObject> objecteraserlist); //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
+	void FindRemovers(int curLayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
 	void RemoveObjects(); //Функция удаления всех найденных объектов
 	void RemoveObject(int objectID); //Функция удаления i-го объекта со склада 
-	void FindObjectForAdd(int LayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция поиска объектов, добавленных на новом слое
+	void FindObjects(int LayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция поиска объектов, добавленных на новом слое
 	void AddNewLayer(StorageLayer& newLayer); //Функция добавления нового слоя
 };
