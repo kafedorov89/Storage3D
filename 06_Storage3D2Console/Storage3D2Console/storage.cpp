@@ -22,7 +22,7 @@ Storage::~Storage()
 {
 }
 
-void Storage::CalcNewLayerDelta(){
+void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep){
 	//Initialization of point clouds source, target and two outputs
 	pcl::PointCloud<pcl::PointXYZ>::Ptr old_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXY>::Ptr old2d_cloud(new pcl::PointCloud<pcl::PointXY>);
@@ -53,29 +53,39 @@ void Storage::CalcNewLayerDelta(){
 
 		if (std::abs(deltaZ) >= deltaLimit){
 			if (deltaZ > 0){
-				delta_pos_cloud->push_back(old_cloud->points[oldPointIndex]);
+				delta_pos_cloud->push_back(new_cloud->points[i]);
+				//delta_pos_cloud->push_back(old_cloud->points[oldPointIndex]);
 			}
 			else{
-				delta_neg_cloud->push_back(old_cloud->points[oldPointIndex]);
+				delta_neg_cloud->push_back(new_cloud->points[i]);
+				//delta_neg_cloud->push_back(old_cloud->points[oldPointIndex]);
 			}
 		}
 	}
 
 	//Auto calculation claster's parameters
-	float cur_voxelDensity = LayerList[llSize - 1]->planeDensity;
-	float CloudZStep = 1.5 * deltaLimit;
-	float posPlaneClasterTollerance = 2 * cur_voxelDensity;
-	int posMinPlaneClasterSize = (int) (0.5 * (((float)ObjectLimitSize[0] / (float)cur_voxelDensity) * ((float)ObjectLimitSize[1] / (float)cur_voxelDensity)));
-	int posMaxPlaneClasterSize = (int) (5 * (((float)ObjectLimitSize[3] / (float)cur_voxelDensity) * ((float)ObjectLimitSize[4] / (float)cur_voxelDensity)));
+	float cur_planeDensity = LayerList[llSize - 1]->planeDensity;
+	
 
-	float negPlaneClasterTollerance = cur_voxelDensity;
+	/*float min_mult = 1;
+	float max_mult = 10;
+	float toll_milt = 1.5;
+	float step_milt = 3;
+	float CloudZStep = step_milt * deltaLimit;
+	float posPlaneClasterTollerance = toll_milt * cur_planeDensity;
+	int posMinPlaneClasterSize = (int)(min_mult * (((float)ObjectLimitSize[0] / (float)cur_planeDensity) * ((float)ObjectLimitSize[1] / (float)cur_planeDensity)));
+	int posMaxPlaneClasterSize = (int)(max_mult * (((float)ObjectLimitSize[3] / (float)cur_planeDensity) * ((float)ObjectLimitSize[4] / (float)cur_planeDensity)));
+
+	float negPlaneClasterTollerance = cur_planeDensity;
 	int negMinPlaneClasterSize = posMinPlaneClasterSize;
-	int negMaxPlaneClasterSize = posMaxPlaneClasterSize;
+	int negMaxPlaneClasterSize = posMaxPlaneClasterSize;*/
+
 
 	if (enablePlaneFiltration){
 		//CloudPlaneFiltration(newlayer.DepthMap, newlayer.DepthMap, DistanceThreshold);
-		CloudPlaneFiltration(delta_pos_cloud, delta_pos_cloud, posPlaneClasterTollerance, posMinPlaneClasterSize, posMaxPlaneClasterSize, CloudZStep);
-		CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud, negPlaneClasterTollerance, negMinPlaneClasterSize, negMaxPlaneClasterSize, CloudZStep);
+		CloudPlaneFiltration(delta_pos_cloud, delta_pos_cloud, PlaneClasterTollerance, MinPlaneClasterSize, MaxPlaneClasterSize, CloudZStep);
+		CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud, PlaneClasterTollerance, MinPlaneClasterSize, MaxPlaneClasterSize, CloudZStep);
+		//CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud, negPlaneClasterTollerance, negMinPlaneClasterSize, negMaxPlaneClasterSize, CloudZStep);
 	}
 	
 	LayerList[llSize - 1]->layerPositiveDelta.swap(delta_pos_cloud);
@@ -151,14 +161,18 @@ void Storage::FindObjectForAdd(int curLayerUID, float valid_percent, int nearest
 			kdtree.setInputCloud(oldcloud2d);
 
 			pcl::PointXYZ *testPoint = new pcl::PointXYZ();
+			
 			testPoint->x = test_object->position(0);
 			testPoint->y = test_object->position(1);
-			testPoint->z = test_object->position(2);
+			testPoint->z = test_object->position(2) - 0.5 * test_object->height; //Minus because oZ axis is up side down
 			
+			LayerList[curLayerUID]->objectForAddList.push_back(test_object); //DEBUG
+
 			//int oldpointindex;
 
 			//float center_height = GetPointDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, oldpointindex);
 			float center_height = GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 40);
+			std::cout << "Approximate height = " << center_height << std::endl;
 
 			if (center_height < ObjectLimitSize[2]){
 				test_object->isValid = false;

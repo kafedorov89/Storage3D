@@ -20,7 +20,7 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	AddedDate = storedobject.AddedDate;
 	//RemovedDate = storedobject.RemovedDate;
 	isValid = storedobject.isValid;
-	object_cloud->swap(*storedobject.object_cloud);
+	object_cloud = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>(*storedobject.object_cloud));
 	step_degree = storedobject.step_degree;
 	max_degree = storedobject.max_degree;
 	objectDensity = storedobject.objectDensity;
@@ -163,6 +163,7 @@ void StoredObject::find_bbox(){
 
 	cur_x_width = boundingBox->GetBound(1) - boundingBox->GetBound(0);
 	cur_y_lenght = boundingBox->GetBound(3) - boundingBox->GetBound(2);
+	height = boundingBox->GetBound(5) - boundingBox->GetBound(4);
 
 	Eigen::Affine3f* move_to_zero = new Eigen::Affine3f(pcl::getTransformation(-mass_center(0), -mass_center(1), -mass_center(2), 0, 0, 0));
 	pcl::transformPointCloud(*object_cloud, *zero_point_cloud, *move_to_zero);
@@ -175,7 +176,7 @@ void StoredObject::find_bbox(){
 
 	for (int z_yaw = 0; z_yaw < max_degree; z_yaw += step_degree){
 		i++;
-		std::cout << step_count - i << std::endl << std::endl;
+		//std::cout << step_count - i << std::endl << std::endl; //DEBUG
 		Eigen::Affine3f* transform_rotate = new Eigen::Affine3f(pcl::getTransformation(0, 0, 0, DEG2RAD(x_roll), DEG2RAD(y_pitch), DEG2RAD(z_yaw)));
 		//Eigen::Affine3f transform_rotate = pcl::getTransformation(0, 0, 0, DEG2RAD(x_roll), 0, DEG2RAD(z_yaw));
 		pcl::transformPointCloud(*zero_point_cloud, *minimal_cloud, *transform_rotate);
@@ -205,8 +206,10 @@ void StoredObject::find_bbox(){
 		delete bBox;
 	}
 
-	jump_to_zero = new Eigen::Affine3f(pcl::getTransformation(-mass_center(0), -mass_center(1), -mass_center(2), DEG2RAD(roll), DEG2RAD(pitch), DEG2RAD(yaw)));
-	jump_to_bbox = new Eigen::Affine3f(pcl::getTransformation(mass_center(0), mass_center(1), mass_center(2), DEG2RAD(-roll), DEG2RAD(-pitch), DEG2RAD(-yaw)));
+
+
+	jump_to_zero = new Eigen::Affine3f(pcl::getTransformation(-mass_center(0), -mass_center(1), -mass_center(2), DEG2RAD(-roll), DEG2RAD(-pitch), DEG2RAD(-yaw)));
+	jump_to_bbox = new Eigen::Affine3f(pcl::getTransformation(mass_center(0), mass_center(1), mass_center(2), DEG2RAD(roll), DEG2RAD(pitch), DEG2RAD(yaw)));
 	
 	//rotational_matrix_OBB4f = new Eigen::Matrix4f(jump_to_bbox->matrix());
 	rotational_matrix_OBB4f = jump_to_bbox->matrix();

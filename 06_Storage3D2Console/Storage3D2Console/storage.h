@@ -85,7 +85,7 @@ public:
 		bool enablenoizefiltration);
 	~Storage();
 
-	void Storage::CalcNewLayerDelta(); //Функция вычисления Delta в реальных координатах для добавленного слоя
+	void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep); //Функция вычисления Delta в реальных координатах для добавленного слоя
 	void AddNewObject(StoredObject& newObject); //Функция добавления нового объекта
 	void FindObjectForRemove(vector<StoredObject> objecteraserlist); //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
 	void RemoveObjects(); //Функция удаления всех найденных объектов

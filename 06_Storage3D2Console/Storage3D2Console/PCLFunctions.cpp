@@ -66,7 +66,6 @@ void CloudPlaneFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr result_cloud_tmp(new pcl::PointCloud<pcl::PointXYZ>);
 	
-
 	float minz = FLT_MAX;
 	float maxz = -FLT_MAX;
 	float cloud_height = 0;
@@ -90,7 +89,7 @@ void CloudPlaneFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
 		pcl::PointIndices::Ptr step_inliers(new pcl::PointIndices);
 		pcl::ExtractIndices<pcl::PointXYZ> extract;
 		
-		std::cout << istep << std::endl;
+		//std::cout << istep << std::endl; //DEBUG
 		for (int i = 0; i < cloud->size(); i++){
 			if (cloud->points[i].z >= istep && cloud->points[i].z < istep + cloud_step){
 				step_inliers->indices.push_back(i);

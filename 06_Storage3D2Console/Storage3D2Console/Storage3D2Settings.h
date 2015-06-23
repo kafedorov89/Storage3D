@@ -5,21 +5,20 @@ using boost::property_tree::ptree;
 
 //Gloabal parameters
 float delta_limit;
-float plane_threshold;
+
 float plane_claster_tolerance;
-int plane_minpoints;
-int plane_maxpoints;
+int min_plane_claster_size;
+int max_plane_claster_size;
+float cloud_z_step;
 
 float zepsangle;
 bool enable_planefiltration;
 bool perpendicularonly;
 bool enable_noizefiltration;
 
-float claster_tolerance;
-//float relative_claster_min = 0.001;
-//float relative_claster_max = 0.2;
-int minpoints;
-int maxpoints;
+float obj_claster_tolerance;
+int obj_minpoints;
+int obj_maxpoints;
 
 float object_minx;
 float object_miny;
@@ -35,7 +34,6 @@ bool saving_state;
 float object_density;
 float plane_density;
 bool enable_voxelgridfiltration;
-float cloudzstep;
 
 using namespace std;
 
@@ -51,27 +49,20 @@ void loadSettingsFile(){
 			string fieldname = key.first;
 			if (key.first == "delta_limit")
 				delta_limit = key.second.get_value<float>();
-			if (key.first == "plane_threshold")
-				plane_threshold = key.second.get_value<float>();
-
 			if (key.first == "plane_claster_tolerance")
 				plane_claster_tolerance = key.second.get_value<float>();
-			if (key.first == "plane_minpoints")
-				plane_minpoints = key.second.get_value<int>();
-			if (key.first == "plane_maxpoints")
-				plane_maxpoints = key.second.get_value<int>();
-			
+			if (key.first == "min_plane_claster_size")
+				min_plane_claster_size = key.second.get_value<int>();
+			if (key.first == "max_plane_claster_size")
+				max_plane_claster_size = key.second.get_value<int>();
 			if (key.first == "object_density")
 				object_density = key.second.get_value<float>();
 			if (key.first == "plane_density")
 				plane_density = key.second.get_value<float>();
-
 			if (key.first == "enable_voxelgridfiltration")
 				enable_voxelgridfiltration = key.second.get_value<bool>();
-			
-
-			if (key.first == "cloudzstep")
-				cloudzstep = key.second.get_value<float>();
+			if (key.first == "cloud_z_step")
+				cloud_z_step = key.second.get_value<float>();
 			if (key.first == "zepsangle")
 				zepsangle = key.second.get_value<float>();
 			if (key.first == "enable_planefiltration")
@@ -80,14 +71,12 @@ void loadSettingsFile(){
 				perpendicularonly = key.second.get_value<bool>();
 			if (key.first == "enable_noizefiltration")
 				enable_noizefiltration = key.second.get_value<bool>();
-
-			if (key.first == "claster_tolerance")
-				claster_tolerance = key.second.get_value<float>();
-			if (key.first == "minpoints")
-				minpoints = key.second.get_value<float>();
-			if (key.first == "maxpoints")
-				maxpoints = key.second.get_value<float>();
-
+			if (key.first == "obj_claster_tolerance")
+				obj_claster_tolerance = key.second.get_value<float>();
+			if (key.first == "obj_minpoints")
+				obj_minpoints = key.second.get_value<int>();
+			if (key.first == "obj_maxpoints")
+				obj_maxpoints = key.second.get_value<int>();
 			if (key.first == "object_minx")
 				object_minx = key.second.get_value<float>();
 			if (key.first == "object_miny")

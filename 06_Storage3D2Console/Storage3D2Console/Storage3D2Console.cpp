@@ -154,14 +154,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			storage->ObjectLimitSize[4] = object_maxy;
 			storage->ObjectLimitSize[5] = object_maxz;
 
-			storage->CalcNewLayerDelta();
+			storage->CalcNewLayerDelta(plane_claster_tolerance, min_plane_claster_size,	max_plane_claster_size, cloud_z_step);
 			
 			if (saving_state){
 				newlayer->SaveLayerToPCD();
 			}
 
 			//Show positive delta cloud
-			delta_viewer->addPointCloud(storage->LayerList[storage->LayerList.size()-1]->layerPositiveDelta, "delta_pos_cloud", 0); //DEBUG
+			delta_viewer->addPointCloud(storage->LayerList[storage->LayerList.size() - 1]->layerPositiveDelta, "delta_pos_cloud", 0); //DEBUG
 			delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)255 / (float)255, (float)0 / (float)255, "delta_pos_cloud"); //DEBUG
 
 			//Show negative delta cloud
@@ -174,19 +174,19 @@ int _tmain(int argc, _TCHAR* argv[])
 			//Extract clasters from positive delta
 			//Auto calculation claster's parameters
 			float cur_planeDensity = storage->LayerList[storage->LayerList.size() - 1]->planeDensity;
-			float min_mult = 1;
-			float max_mult = 10;
-			float toll_milt = 2;
-			claster_tolerance = toll_milt * cur_planeDensity;
-			minpoints = (int)(min_mult * (((float)object_minx / (float)cur_planeDensity) * ((float)object_miny / (float)cur_planeDensity)));
-			maxpoints = (int)(max_mult * (((float)object_maxx / (float)cur_planeDensity) * ((float)object_maxy / (float)cur_planeDensity)));
+			//float min_mult = 1;
+			//float max_mult = 10;
+			//float toll_milt = 2;
+			//claster_tolerance = toll_milt * cur_planeDensity;
+			//minpoints = (int)(min_mult * (((float)object_minx / (float)cur_planeDensity) * ((float)object_miny / (float)cur_planeDensity)));
+			//maxpoints = (int)(max_mult * (((float)object_maxx / (float)cur_planeDensity) * ((float)object_maxy / (float)cur_planeDensity)));
 			
 			
 			FindClasters(storage->LayerList[storage->LayerList.size() - 1]->layerPositiveDelta, 
 				storage->LayerList[storage->LayerList.size() - 1]->PositiveClasterList, 
-				claster_tolerance, 
-				minpoints, 
-				maxpoints); //DEBUG
+				obj_claster_tolerance, 
+				obj_minpoints, 
+				obj_maxpoints); //DEBUG
 			std::cout << "Was found " << storage->LayerList[storage->LayerList.size() - 1]->PositiveClasterList.size() << " positive clasters." << std::endl;
 			
 			if (storage->LayerList[storage->LayerList.size() - 1]->PositiveClasterList.size() > 0){
@@ -208,9 +208,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			//Extract clasters from negative delta
 			FindClasters(storage->LayerList[storage->LayerList.size() - 1]->layerNegativeDelta, 
 				storage->LayerList[storage->LayerList.size() - 1]->NegativeClasterList, 
-				claster_tolerance, 
-				minpoints, 
-				maxpoints);
+				obj_claster_tolerance, 
+				obj_minpoints, 
+				obj_maxpoints);
 			std::cout << "Was found " << storage->LayerList[storage->LayerList.size() - 1]->NegativeClasterList.size() << " negative clasters" << std::endl;
 
 			if (storage->LayerList[storage->LayerList.size() - 1]->NegativeClasterList.size() > 0){
@@ -234,13 +234,13 @@ int _tmain(int argc, _TCHAR* argv[])
 			
 			storage->FindObjectForAdd(storage->LayerList.size() - 1, valid_percent, nearest_point_count, object_density);
 			
-			if (newlayer->objectForAddList.size() > 0)
+			if (storage->LayerList[storage->LayerList.size() - 1]->objectForAddList.size() > 0)
 			{
-				std::cout << newlayer->objectForAddList.size() << " new objects was found." << std::endl;
+				std::cout << storage->LayerList[storage->LayerList.size() - 1]->objectForAddList.size() << " new objects was found." << std::endl;
 				std::cout << "Adding founded objects..." << std::endl;
 				//Add founded objects
-				for (int i = 0; i < newlayer->objectForAddList.size(); i++){
-					storage->AddNewObject(*newlayer->objectForAddList[i]);
+				for (int i = 0; i < storage->LayerList[storage->LayerList.size() - 1]->objectForAddList.size(); i++){
+					storage->AddNewObject(*storage->LayerList[storage->LayerList.size() - 1]->objectForAddList[i]);
 					std::cout << i + 1 << "object was added" << std::endl;
 
 				}
@@ -274,10 +274,10 @@ int _tmain(int argc, _TCHAR* argv[])
 			}*/
 
 			//Show actual and removed objects
-			if (storage->ObjectList.size()){ //DEBUG
+ 			if (storage->ObjectList.size()){ //DEBUG
 				for (int i = 0; i < storage->ObjectList.size(); i++){
 					std::stringstream ss;
-					ss << "Actual objects" << i;
+					ss << "Actual_objects_" << i;
 
 					pos_claster_viewer->addCube(storage->ObjectList[i]->position,
 						storage->ObjectList[i]->quaternion_to_bbox,
@@ -286,10 +286,10 @@ int _tmain(int argc, _TCHAR* argv[])
 						storage->ObjectList[i]->height, ss.str());
 
 					if (!storage->ObjectList[i]->removed){
-						delta_viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)255 / (float)255, (float)255 / (float)255, (float)255 / (float)255, ss.str());
+						pos_claster_viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0f, 1.0f, 0.0f, ss.str());
 					}
 					else{
-						delta_viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)0 / (float)255, (float)255 / (float)255, ss.str());
+						pos_claster_viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0f, 0.0f, 0.0f, ss.str());
 					}
 				}
 			}
