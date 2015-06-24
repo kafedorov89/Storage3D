@@ -92,72 +92,77 @@ void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClaste
 	LayerList[llSize - 1]->layerNegativeDelta.swap(delta_neg_cloud);
 }
 
-void Storage::FindRemovers(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
+void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
 	//int llSize = LayerList.size();
 
-	for (int i = 0; i < LayerList[curLayerUID]->PositiveClasterList.size(); i++){
+	if (LayerList[curLayerUID]->NegativeClasterList.size() > 0){
+		for (int i = 0; i < LayerList[curLayerUID]->NegativeClasterList.size(); i++){
 
-		time_t rawtime;
-		time(&rawtime);
+			time_t rawtime;
+			time(&rawtime);
 
-		StoredObject *test_remover = new StoredObject(LayerList[curLayerUID]->UID, UID, (int)rawtime, LayerList[curLayerUID]->PositiveClasterList[i], 1, 180, objectdensity);
+			StoredObject *test_remover = new StoredObject(LayerList[curLayerUID]->UID, UID, (int)rawtime, LayerList[curLayerUID]->NegativeClasterList[i], 1, 180, objectdensity);
 
-		//Finding up cover of 2d_object
-		test_remover->find_bbox();
+			//Finding up cover of 2d_object
+			test_remover->find_bbox();
 
-		//Check length and width of 2d_object
-		test_remover->check_2d_valid_object(ObjectLimitSize, valid_percent);
+			//Check length and width of 2d_object
+			test_remover->check_2d_valid_object(ObjectLimitSize, valid_percent);
 
-		if (test_remover->isValid){
-			//Check height in position (center) point
-			pcl::PointCloud<pcl::PointXY>::Ptr oldcloud2d(new pcl::PointCloud<pcl::PointXY>);
-			Get2DCloudFrom3D(LayerList[curLayerUID - 1]->DepthMap, oldcloud2d);
+			if (test_remover->isValid){
+				//Check height in position (center) point
+				pcl::PointCloud<pcl::PointXY>::Ptr oldcloud2d(new pcl::PointCloud<pcl::PointXY>);
+				Get2DCloudFrom3D(LayerList[curLayerUID - 1]->DepthMap, oldcloud2d);
 
-			pcl::KdTreeFLANN<pcl::PointXY> kdtree;
-			kdtree.setInputCloud(oldcloud2d);
+				pcl::KdTreeFLANN<pcl::PointXY> kdtree;
+				kdtree.setInputCloud(oldcloud2d);
 
-			pcl::PointXYZ *testPoint = new pcl::PointXYZ();
+				pcl::PointXYZ *testPoint = new pcl::PointXYZ();
 
-			//Getting test point with max Z coordinate
-			testPoint->x = test_remover->position(0);
-			testPoint->y = test_remover->position(1);
-			testPoint->z = test_remover->position(2) - 0.5 * test_remover->height; //Minus (-) because oZ axis is up side down
+				//Getting test point with max Z coordinate
+				testPoint->x = test_remover->position(0);
+				testPoint->y = test_remover->position(1);
+				testPoint->z = test_remover->position(2) + 0.5 * test_remover->height; //Plus (+) because oZ axis is up side down
 
-			float center_height = GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
-			std::cout << "Approximate height = " << center_height << std::endl;
-		}
-	}
-	
-	objectIDForRemoveList.clear();
+				float center_height = -GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10); //Minus (-) because oZ axis is up side down
+				std::cout << "Remover's approximate height = " << center_height << std::endl;
+				
+				test_remover->position(2) = testPoint->z - 0.5f * center_height; //Minus (-) because oZ axis is up side down
+				
+				test_remover->height = center_height;
 
-	objectEraserList.
+				test_remover->CalcJamp();
 
-
-	for (int i = 0; i < objecteraserlist.size() - 1; i++){
-		for (int k = 0; k < ObjectList.size() - 1; k++){
-			//Проверяем находится ли центр k-го объекта внутри i-го удаляющего объема  
-			//if (objecteraserlist[i].check_isinside_point(pcl::PointXYZ(ObjectList[i]->position->x(), ObjectList[i]->position->y(), ObjectList[i]->position->z()))){
-			if (objecteraserlist[i].check_isinside_point(pcl::PointXYZ(ObjectList[i]->position(0), ObjectList[i]->position(1), ObjectList[i]->position(2)))){
-				objectIDForRemoveList.push_back(ObjectList[i]->UID);
+				LayerList[curLayerUID]->removerList.push_back(test_remover);
 			}
 		}
-	}
 
-	//Showing objects numbers for remove
-	std::cout << "Found for remove: " << std::endl;
-	for (int i = 0; i < objectIDForRemoveList.size() - 1; i++){
-		std::cout << " " << objectIDForRemoveList[i] << " " << std::endl;
+		//Applying founded removers
+		if (LayerList[curLayerUID]->removerList.size() > 0)
+		{
+			std::cout << LayerList[curLayerUID]->removerList.size() << " removers was found." << std::endl;
+			std::cout << "Removing objects..." << std::endl;
+			//Add founded objects
+			for (int i = 0; i < LayerList[curLayerUID]->removerList.size(); i++){
+				for (int k = 0; k < ObjectList.size(); k++){
+					if (LayerList[curLayerUID]->removerList[i]->check_isinside_point(pcl::PointXYZ(ObjectList[k]->position(0), ObjectList[k]->position(1), ObjectList[k]->position(2)))){
+						RemoveObject(k);
+						std::cout << i + 1 << " object was removed" << std::endl;
+					}
+				}
+			}
+		}
+		else{
+			std::cout << "Objects for remove wasn't founded..." << std::endl;
+		}
+	}
+	else{
+		std::cout << "Objects for remove wasn't founded..." << std::endl;
 	}
 }
 
 void Storage::RemoveObject(int objectID){ //Функция удаления i-го объекта со склада 
 	ObjectList[objectID]->Remove();
-}
-
-void Storage::RemoveObjects(){ //Функция удаления i-го объекта со склада 
-	for (int i = 0; i < objectIDForRemoveList.size() - 1; i++){
-		this->RemoveObject(i);
-	}
 }
 
 void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового слоя
@@ -177,78 +182,104 @@ void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового с
 void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов, добавленных на новом слое
 	//int llSize = LayerList.size();
 	
-	for (int i = 0; i < LayerList[curLayerUID]->PositiveClasterList.size(); i++){
-		
-		time_t rawtime;
-		time(&rawtime);
+	if (LayerList[curLayerUID]->PositiveClasterList.size() > 0){
+		for (int i = 0; i < LayerList[curLayerUID]->PositiveClasterList.size(); i++){
 
-		StoredObject *test_object = new StoredObject(LayerList[curLayerUID]->UID, UID, (int)rawtime, LayerList[curLayerUID]->PositiveClasterList[i], 1, 180, objectdensity);
-		
-		//Finding up cover of 2d_object
-		test_object->find_bbox();
-		
-		//Check length and width of 2d_object
-		test_object->check_2d_valid_object(ObjectLimitSize, valid_percent);
-		
-		if (test_object->isValid){
-			//Check height in position (center) point
-			pcl::PointCloud<pcl::PointXY>::Ptr oldcloud2d(new pcl::PointCloud<pcl::PointXY>);
-			Get2DCloudFrom3D(LayerList[curLayerUID - 1]->DepthMap, oldcloud2d);
+			time_t rawtime;
+			time(&rawtime);
 
-			pcl::KdTreeFLANN<pcl::PointXY> kdtree;
-			kdtree.setInputCloud(oldcloud2d);
+			StoredObject *test_object = new StoredObject(LayerList[curLayerUID]->UID, UID, (int)rawtime, LayerList[curLayerUID]->PositiveClasterList[i], 1, 180, objectdensity);
 
-			pcl::PointXYZ *testPoint = new pcl::PointXYZ();
-			
-			//Getting test point with max Z coordinate
-			testPoint->x = test_object->position(0);
-			testPoint->y = test_object->position(1);
-			testPoint->z = test_object->position(2) - 0.5 * test_object->height; //Minus (-) because oZ axis is up side down
-			
-			//LayerList[curLayerUID]->objectForAddList.push_back(test_object); //DEBUG
+			//Finding up cover of 2d_object
+			test_object->find_bbox();
 
-			//int oldpointindex;
+			//Check length and width of 2d_object
+			test_object->check_2d_valid_object(ObjectLimitSize, valid_percent);
 
-			//float center_height = GetPointDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, oldpointindex);
-			float center_height = GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
-			std::cout << "Approximate height = " << center_height << std::endl;
+			if (test_object->isValid){
+				//Check height in position (center) point
+				pcl::PointCloud<pcl::PointXY>::Ptr oldcloud2d(new pcl::PointCloud<pcl::PointXY>);
+				Get2DCloudFrom3D(LayerList[curLayerUID - 1]->DepthMap, oldcloud2d);
 
-			//Less than one object 
-			if (center_height < ObjectLimitSize[2]){
-				test_object->isValid = false;
-				//Find several or one object
-			}
-			//About one object
-			else if (center_height > ObjectLimitSize[2] && center_height < ObjectLimitSize[5]){
-				test_object->isValid = true;
-				test_object->position(2) += center_height * 0.5 - 0.5 * test_object->height; //Plus (+) because oZ axis is up side down
-				test_object->height = center_height;
-				LayerList[curLayerUID]->objectForAddList.push_back(test_object);
-			}
-			//Several objects
-			else if (center_height > ObjectLimitSize[5])
-			{
-				//Manual settings of obj_count or obj_height 
-				//int obj_count 
-				//std::cin >> obj_count;
+				pcl::KdTreeFLANN<pcl::PointXY> kdtree;
+				kdtree.setInputCloud(oldcloud2d);
 
-				test_object->isGroup = true;
-				int obj_count = (float)center_height / (float)ObjectLimitSize[2]; //FIXME. Возможна набегающая погрешность при большом количестве объектов и одновременно большом диапозоне между maxz = ObjectLimitSize[5] и minz = ObjectLimitSize[2]
-				float zero_level = testPoint->z + center_height; //Plus (+) because oZ axis is up side down
-				float obj_height = center_height / obj_count;
+				pcl::PointXYZ *testPoint = new pcl::PointXYZ();
 
-				for (int k = 0; k < obj_count; k++){
-					time(&rawtime);
+				//Getting test point with max Z coordinate
+				testPoint->x = test_object->position(0);
+				testPoint->y = test_object->position(1);
+				testPoint->z = test_object->position(2) - 0.5f * test_object->height; //Minus (-) because oZ axis is up side down
 
-					StoredObject *k_object = new StoredObject(*test_object);
-					k_object->isValid = true;
-					k_object->UID = (int)rawtime;
-					k_object->height = obj_height;
-					k_object->position(2) = zero_level - obj_height * 0.5 - k * obj_height; //Minus (-) because oZ axis is up side down
-					LayerList[curLayerUID]->objectForAddList.push_back(k_object);
+				//LayerList[curLayerUID]->objectForAddList.push_back(test_object); //DEBUG
+
+				//int oldpointindex;
+
+				//float center_height = GetPointDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, oldpointindex);
+				float center_height = GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
+				std::cout << "Object's approximate height = " << center_height << std::endl;
+
+				//Less than one object 
+				if (center_height < ObjectLimitSize[2]){
+					test_object->isValid = false;
+					//Find several or one object
+				}
+				//About one object
+				else if (center_height > ObjectLimitSize[2] && center_height < ObjectLimitSize[5]){
+					test_object->isValid = true;
+					test_object->position(2) = testPoint->z + 0.5f * center_height; //Plus (+) because oZ axis is up side down
+					test_object->height = center_height;
+
+					test_object->CalcJamp();
+
+					LayerList[curLayerUID]->objectForAddList.push_back(test_object);
+				}
+				//Several objects
+				else if (center_height > ObjectLimitSize[5])
+				{
+					//Manual settings of obj_count or obj_height 
+					//int obj_count 
+					//std::cin >> obj_count;
+
+					test_object->isGroup = true;
+					int obj_count = (float)center_height / (float)ObjectLimitSize[2]; //FIXME. Возможна набегающая погрешность при большом количестве объектов и одновременно большом диапозоне между maxz = ObjectLimitSize[5] и minz = ObjectLimitSize[2]
+					float zero_level = testPoint->z + center_height; //Plus (+) because oZ axis is up side down
+					float obj_height = center_height / obj_count;
+
+					for (int k = 0; k < obj_count; k++){
+						time(&rawtime);
+
+						StoredObject *k_object = new StoredObject(*test_object);
+						k_object->isValid = true;
+						k_object->UID = (int)rawtime;
+						k_object->height = obj_height;
+						k_object->position(2) = zero_level - obj_height * 0.5 - k * obj_height; //Minus (-) because oZ axis is up side down
+
+						k_object->CalcJamp();
+
+						LayerList[curLayerUID]->objectForAddList.push_back(k_object);
+					}
 				}
 			}
+
+			if (LayerList[curLayerUID]->objectForAddList.size() > 0)
+			{
+				std::cout << LayerList[curLayerUID]->objectForAddList.size() << " new objects was found." << std::endl;
+				std::cout << "Adding founded objects..." << std::endl;
+				//Add founded objects
+				for (int i = 0; i < LayerList[curLayerUID]->objectForAddList.size(); i++){
+					AddNewObject(*LayerList[curLayerUID]->objectForAddList[i]);
+					std::cout << i + 1 << " object was added" << std::endl;
+
+				}
+			}
+			else{
+				std::cout << "Objects wasn't founded..." << std::endl;
+			}
 		}
+	}
+	else{
+		std::cout << "Objects wasn't founded..." << std::endl;
 	}
 }
 

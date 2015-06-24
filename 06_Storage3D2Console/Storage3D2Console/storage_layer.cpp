@@ -20,7 +20,7 @@ StorageLayer::StorageLayer(const StorageLayer& storagelayer){
 	PositiveClasterList = storagelayer.PositiveClasterList;
 	NegativeClasterList = storagelayer.NegativeClasterList;
 	objectForAddList = storagelayer.objectForAddList;
-	objectEraserList = storagelayer.objectEraserList;
+	removerList = storagelayer.removerList;
 	planeDensity = storagelayer.planeDensity;
 
 	layerNegativeDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>(*storagelayer.layerNegativeDelta));

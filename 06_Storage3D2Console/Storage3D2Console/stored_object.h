@@ -112,6 +112,8 @@ public:
 	//Moving to position
 	Eigen::Vector3f position;
 	Eigen::Quaternionf quaternion_to_bbox;
+	Eigen::Quaternionf quaternion_to_zero;
+
 	Eigen::Affine3f* jump_to_bbox;
 	//Moving to zero
 	Eigen::Affine3f* jump_to_zero;
@@ -147,4 +149,5 @@ public:
 	bool check_isinside_point(const pcl::PointXYZ &check_point);
 	void find_bbox(); //Finding BoundingBox
 	void Remove();
+	void CalcJamp();
 };

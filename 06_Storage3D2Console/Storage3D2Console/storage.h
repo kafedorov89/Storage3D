@@ -60,7 +60,7 @@ public:
 
 	vector<StorageLayer*> LayerList; //Список слоев добавленных на склад
 	vector<StoredObject*> ObjectList; //Список объектов добавленных на склад
-	vector<int> objectIDForRemoveList; //Массив типа <int> идентификаторов объектов отмеченных для удаления со склада
+	//vector<int> objectIDForRemoveList; //Массив типа <int> идентификаторов объектов отмеченных для удаления со склада
 
 	float deltaLimit; //Допуск на разницу между высотами слоев после которой значения из layerDelta считаются существенными
 	//float deltaValidPercent; // (0 - 1)Процент точек карты глубины с отрицательным значением Delta при котором объект будет удален
@@ -87,8 +87,7 @@ public:
 
 	void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep); //Функция вычисления Delta в реальных координатах для добавленного слоя
 	void AddNewObject(StoredObject& newObject); //Функция добавления нового объекта
-	void FindRemovers(int curLayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
-	void RemoveObjects(); //Функция удаления всех найденных объектов
+	void RemoveObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция удаления всех найденных объектов
 	void RemoveObject(int objectID); //Функция удаления i-го объекта со склада 
 	void FindObjects(int LayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция поиска объектов, добавленных на новом слое
 	void AddNewLayer(StorageLayer& newLayer); //Функция добавления нового слоя

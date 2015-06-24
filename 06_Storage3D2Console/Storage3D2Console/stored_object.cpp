@@ -39,6 +39,7 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 
 	position = storedobject.position;
 	quaternion_to_bbox = storedobject.quaternion_to_bbox;
+	quaternion_to_zero = storedobject.quaternion_to_zero;
 	jump_to_bbox = storedobject.jump_to_bbox;
 	jump_to_zero = storedobject.jump_to_zero;
 }
@@ -114,14 +115,26 @@ void StoredObject::check_2d_valid_object(float limit_array[6], float valid_perce
 }
 
 bool StoredObject::check_isinside_point(const pcl::PointXYZ &check_point){
+	//Eigen::Affine3f* transform_rotate = new Eigen::Affine3f(pcl::getTransformation(-position(0), -position(1), -position(2), 0, 0, 0));
 	pcl::PointXYZ* point_in_zero = new pcl::PointXYZ(pcl::transformPoint(check_point, *jump_to_zero));
+	//pcl::PointXYZ* point_in_zero = new pcl::PointXYZ(pcl::transformPoint(check_point, *transform_rotate));
 
-	if (((-width / 2.0f) <= point_in_zero->x) && 
-		(point_in_zero->x <= (width / 2.0f)) && 
-		((-lenght / 2.0f) <= point_in_zero->y) && 
-		(point_in_zero->y <= (lenght / 2.0f)) && 
-		((-height / 2.0f) <= point_in_zero->z) && 
-		(point_in_zero->z <= (height / 2.0f))){
+	float minx = -width / 2.0f;
+	float maxx = width / 2.0f;
+
+	float miny = -lenght / 2.0f;
+	float maxy = lenght / 2.0f;
+
+	float minz = -height / 2.0f;
+	float maxz = height / 2.0f;
+
+	std::cout << "x:" << minx << " < " << point_in_zero->x << " < " << maxx << std::endl;
+	std::cout << "y:" << miny << " < " << point_in_zero->y << " < " << maxy << std::endl;
+	std::cout << "z:" << minz << " < " << point_in_zero->z << " < " << maxz << std::endl;
+
+	if (minx <= point_in_zero->x && point_in_zero->x <= maxx && 
+		miny <= point_in_zero->y && point_in_zero->y <= maxy && 
+		minz <= point_in_zero->z && point_in_zero->z <= maxz){
 		std::cout << " Is Inside " << std::endl;
 		return true;
 	}
@@ -140,8 +153,7 @@ void StoredObject::find_bbox(){
 	pcl::MomentOfInertiaEstimation<pcl::PointXYZ>* feature_extractor = new pcl::MomentOfInertiaEstimation<pcl::PointXYZ>();
 	std::vector<float> moment_of_inertia;
 	std::vector<float> eccentricity;
-	Eigen::Matrix3f rotational_matrix_OBB3f = Eigen::Matrix3f();
-	Eigen::Matrix4f rotational_matrix_OBB4f = Eigen::Matrix4f();
+
 	Eigen::Vector3f mass_center = Eigen::Vector3f();
 
 	float cur_x_width, cur_y_lenght;
@@ -176,9 +188,7 @@ void StoredObject::find_bbox(){
 
 	for (int z_yaw = 0; z_yaw < max_degree; z_yaw += step_degree){
 		i++;
-		//std::cout << step_count - i << std::endl << std::endl; //DEBUG
 		Eigen::Affine3f* transform_rotate = new Eigen::Affine3f(pcl::getTransformation(0, 0, 0, DEG2RAD(x_roll), DEG2RAD(y_pitch), DEG2RAD(z_yaw)));
-		//Eigen::Affine3f transform_rotate = pcl::getTransformation(0, 0, 0, DEG2RAD(x_roll), 0, DEG2RAD(z_yaw));
 		pcl::transformPointCloud(*zero_point_cloud, *minimal_cloud, *transform_rotate);
 
 		vtkBoundingBox* bBox = new vtkBoundingBox();
@@ -206,16 +216,36 @@ void StoredObject::find_bbox(){
 		delete bBox;
 	}
 
-
-
-	jump_to_zero = new Eigen::Affine3f(pcl::getTransformation(-mass_center(0), -mass_center(1), -mass_center(2), DEG2RAD(-roll), DEG2RAD(-pitch), DEG2RAD(-yaw)));
-	jump_to_bbox = new Eigen::Affine3f(pcl::getTransformation(mass_center(0), mass_center(1), mass_center(2), DEG2RAD(roll), DEG2RAD(pitch), DEG2RAD(yaw)));
+	position = Eigen::Vector3f(mass_center(0), mass_center(1), mass_center(2));
+	CalcJamp();
 	
-	//rotational_matrix_OBB4f = new Eigen::Matrix4f(jump_to_bbox->matrix());
+	delete boundingBox;
+	delete feature_extractor;
+}
+
+void StoredObject::Remove(){
+	//Mark as removed
+	removed = true;
+
+	//Set removed time
+	time_t nowtimesec;
+	time(&nowtimesec);
+	RemovedDate = nowtimesec;
+}
+
+void StoredObject::CalcJamp(){
+	Eigen::Matrix3f rotational_matrix_OBB3f = Eigen::Matrix3f();
+	Eigen::Matrix4f rotational_matrix_OBB4f = Eigen::Matrix4f();
+	Eigen::Matrix3f rotational_matrix_ZERO3f = Eigen::Matrix3f();
+	Eigen::Matrix4f rotational_matrix_ZERO4f = Eigen::Matrix4f();
+	
+	//jump_to_zero = new Eigen::Affine3f(pcl::getTransformation(-position(0), -position(1), -position(2), DEG2RAD(-roll), DEG2RAD(-pitch), DEG2RAD(-yaw)));
+	jump_to_zero = new Eigen::Affine3f(pcl::getTransformation(-position(0), -position(1), -position(2), DEG2RAD(0), DEG2RAD(0), DEG2RAD(0)));
+	jump_to_bbox = new Eigen::Affine3f(pcl::getTransformation(position(0), position(1), position(2), DEG2RAD(roll), DEG2RAD(pitch), DEG2RAD(yaw)));
+
 	rotational_matrix_OBB4f = jump_to_bbox->matrix();
-	
-	//float a = rotational_matrix_OBB4f[0];// (0);
-	
+	rotational_matrix_ZERO4f = jump_to_zero->matrix();
+
 	rotational_matrix_OBB3f(0, 0) = rotational_matrix_OBB4f(0); //FIXME
 	rotational_matrix_OBB3f(0, 1) = rotational_matrix_OBB4f(1); //FIXME
 	rotational_matrix_OBB3f(0, 2) = rotational_matrix_OBB4f(2); //FIXME
@@ -224,21 +254,18 @@ void StoredObject::find_bbox(){
 	rotational_matrix_OBB3f(1, 2) = rotational_matrix_OBB4f(6); //FIXME
 	rotational_matrix_OBB3f(2, 0) = rotational_matrix_OBB4f(8); //FIXME
 	rotational_matrix_OBB3f(2, 1) = rotational_matrix_OBB4f(9); //FIXME
-	rotational_matrix_OBB3f(2, 2) = rotational_matrix_OBB4f(10); //FIXME 
+	rotational_matrix_OBB3f(2, 2) = rotational_matrix_OBB4f(10); //FIXME
 
-	position = Eigen::Vector3f(mass_center(0), mass_center(1), mass_center(2));
+	rotational_matrix_ZERO3f(0, 0) = rotational_matrix_ZERO4f(0); //FIXME
+	rotational_matrix_ZERO3f(0, 1) = rotational_matrix_ZERO4f(1); //FIXME
+	rotational_matrix_ZERO3f(0, 2) = rotational_matrix_ZERO4f(2); //FIXME
+	rotational_matrix_ZERO3f(1, 0) = rotational_matrix_ZERO4f(4); //FIXME
+	rotational_matrix_ZERO3f(1, 1) = rotational_matrix_ZERO4f(5); //FIXME
+	rotational_matrix_ZERO3f(1, 2) = rotational_matrix_ZERO4f(6); //FIXME
+	rotational_matrix_ZERO3f(2, 0) = rotational_matrix_ZERO4f(8); //FIXME
+	rotational_matrix_ZERO3f(2, 1) = rotational_matrix_ZERO4f(9); //FIXME
+	rotational_matrix_ZERO3f(2, 2) = rotational_matrix_ZERO4f(10); //FIXME
+
 	quaternion_to_bbox = Eigen::Quaternionf(rotational_matrix_OBB3f); //FIXME
-
-	delete boundingBox;
-	delete feature_extractor;
-}
-
-void StoredObject::Remove(){
-	//Mark as removed
-	this->removed = true;
-
-	//Set removed time
-	time_t nowtimesec;
-	std::asctime(std::localtime(&nowtimesec));
-	this->RemovedDate = nowtimesec;
+	quaternion_to_zero = Eigen::Quaternionf(rotational_matrix_ZERO3f); //FIXME
 }

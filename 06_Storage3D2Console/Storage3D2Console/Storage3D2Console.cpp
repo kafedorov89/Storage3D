@@ -76,16 +76,19 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	delta_viewer->setBackgroundColor(0, 0, 0);
 	delta_viewer->addCoordinateSystem(1.0);
+	delta_viewer->setPosition(960, 0);
 	delta_viewer->loadCameraParameters("viewer.ini");
 	//delta_viewer->initCameraParameters();
 
 	pos_claster_viewer->setBackgroundColor(0, 0, 0); //DEBUG
 	pos_claster_viewer->addCoordinateSystem(1.0);
+	pos_claster_viewer->setPosition(960, 600);
 	pos_claster_viewer->loadCameraParameters("viewer.ini");
 	//claster_viewer->initCameraParameters();
 
 	neg_claster_viewer->setBackgroundColor(0, 0, 0);
 	neg_claster_viewer->addCoordinateSystem(1.0);
+	neg_claster_viewer->setPosition(0, 600);
 	neg_claster_viewer->loadCameraParameters("viewer.ini");
 
 	//Grab layer
@@ -192,7 +195,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (storage->LayerList[storage->LayerList.size() - 1]->PositiveClasterList.size() > 0){
 				for (int i = 0; i < storage->LayerList[storage->LayerList.size() - 1]->PositiveClasterList.size(); i++){
 					std::stringstream ss;
-					ss << "PositiveClaster_" << i;
+					ss << "positive_claster_" << i;
 
 					pos_claster_viewer->addPointCloud(storage->LayerList[storage->LayerList.size() - 1]->PositiveClasterList[i], ss.str());
 
@@ -202,6 +205,9 @@ int _tmain(int argc, _TCHAR* argv[])
 					pos_claster_viewer->spinOnce();
 					boost::this_thread::sleep(boost::posix_time::microseconds(100));
 				}
+			}
+			else{
+				std::cout << "Positive clasters wasn't found..." << std::endl;
 			}
 			
 			std::cout << "Finding negative clasters..." << std::endl;
@@ -216,7 +222,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (storage->LayerList[storage->LayerList.size() - 1]->NegativeClasterList.size() > 0){
 				for (int i = 0; i < storage->LayerList[storage->LayerList.size() - 1]->NegativeClasterList.size(); i++){
 					std::stringstream ss;
-					ss << "NegativeClaster_" << i;
+					ss << "negative_claster_" << i;
 					neg_claster_viewer->addPointCloud(storage->LayerList[storage->LayerList.size() - 1]->NegativeClasterList[i], ss.str());
 
 					neg_claster_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)(rand() % 255) / (float)255.0, (float)(rand() % 255) / (float)255.0, (float)(rand() % 255) / (float)255.0, ss.str());
@@ -225,79 +231,89 @@ int _tmain(int argc, _TCHAR* argv[])
 					boost::this_thread::sleep(boost::posix_time::microseconds(100));
 				}
 			}
-
-			
-			
+			else{
+				std::cout << "Negative clasters wasn't found..." << std::endl;
+			}
 
 			std::cout << "Finding objects for add..." << std::endl;
 			//Find objects
 			
 			storage->FindObjects(storage->LayerList.size() - 1, valid_percent, nearest_point_count, object_density);
-			
-			if (storage->LayerList[storage->LayerList.size() - 1]->objectForAddList.size() > 0)
-			{
-				std::cout << storage->LayerList[storage->LayerList.size() - 1]->objectForAddList.size() << " new objects was found." << std::endl;
-				std::cout << "Adding founded objects..." << std::endl;
-				//Add founded objects
-				for (int i = 0; i < storage->LayerList[storage->LayerList.size() - 1]->objectForAddList.size(); i++){
-					storage->AddNewObject(*storage->LayerList[storage->LayerList.size() - 1]->objectForAddList[i]);
-					std::cout << i + 1 << "object was added" << std::endl;
 
-				}
-			}
-			else{
-				std::cout << "Objects wasn't founded..." << std::endl;
-			}
-
+			std::cout << "Removing objects..." << std::endl;
 			//Find removers
-			storage->FindRemovers(storage->LayerList.size() - 1, valid_percent, nearest_point_count, object_density);
+			storage->RemoveObjects(storage->LayerList.size() - 1, valid_percent, nearest_point_count, object_density);
 
-			if (storage->LayerList[storage->LayerList.size() - 1]->objectEraserList.size() > 0)
-			{
-				std::cout << storage->LayerList[storage->LayerList.size() - 1]->objectEraserList.size() << " new eraser was found." << std::endl;
-				std::cout << "Adding founded eraser..." << std::endl;
-				//Add founded objects
-				for (int i = 0; i < storage->LayerList[storage->LayerList.size() - 1]->objectEraserList.size(); i++){
-					storage->AddNewObject(*storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i]);
-					std::cout << i + 1 << "object was added" << std::endl;
-
-				}
-			}
-			else{
-				std::cout << "Objects wasn't founded..." << std::endl;
-			}
-
-			//Remove founded objects
-			//storage->RemoveObjects();
-
-			//viewer.setBackgroundColor(0, 0, 0);
-			//viewer.addCoordinateSystem(1.0);
-			//viewer.initCameraParameters();
 			std::cout << "Refreshing visualization..." << std::endl;
 
-			//Show erasers
-			for (int i = 0; i < storage->LayerList[storage->LayerList.size() - 1]->objectEraserList.size() - 1; i++){
-			std::stringstream ss;
-			ss << "Eraser" << i;
+			//Showing removers
+			if (storage->LayerList[storage->LayerList.size() - 1]->removerList.size() > 0){
+				for (int i = 0; i < storage->LayerList[storage->LayerList.size() - 1]->removerList.size(); i++){
+					std::stringstream ss;
+					ss << "remover_" << i;
 
-			neg_claster_viewer->addCube(storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].position,
-				storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].quaternion_to_bbox,
-				storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].width,
-				storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].lenght,
-				storage->LayerList[storage->LayerList.size() - 1]->objectEraserList[i].height, ss.str());
-			neg_claster_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)200 / (float)255, (float)0 / (float)255, (float)0 / (float)255, ss.str());
+					pos_claster_viewer->addCube(storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->position,
+						storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->quaternion_to_bbox,
+						storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->width,
+						storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->lenght,
+						storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->height, ss.str());
+
+					/*Eigen::Vector3f position = storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->position;
+					pcl::PointXYZ* check_point = new pcl::PointXYZ(position(0), position(1), position(2));
+					pcl::PointXYZ* point_in_zero = new pcl::PointXYZ(pcl::transformPoint(*check_point, *storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->jump_to_zero));
+					Eigen::Vector3f positionzero;
+					positionzero(0) = point_in_zero->x;
+					positionzero(1) = point_in_zero->y;
+					positionzero(2) = point_in_zero->z;
+
+					float width = storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->width;
+					float lenght = storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->lenght;
+					float height = storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->height;
+
+					width /= 2.0f;
+					lenght /= 2.0f;
+					height /= 2.0f;
+
+					pos_claster_viewer->addCube(-width, width, -lenght, lenght, -height, height, 1.0f, 1.0f, 1.0f, ss.str());*/
+
+					/*pos_claster_viewer->addCube(positionzero,
+					storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->quaternion_to_zero,
+					storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->width,
+					storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->lenght,
+					storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->height, ss.str());*/
+
+					//pos_claster_viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0f, 0.0f, 1.0f, ss.str());
+				}
+
+				/*for (int i = 0; i < storage->ObjectList.size(); i++){
+					std::stringstream ss;
+					ss << "obj_center_" << i;
+					
+					Eigen::Vector3f position = storage->ObjectList[i]->position;
+					pcl::PointXYZ* check_point = new pcl::PointXYZ(position(0), position(1), position(2));
+					pcl::PointXYZ* point_in_zero = new pcl::PointXYZ(pcl::transformPoint(*check_point, *storage->ObjectList[i]->jump_to_bbox));
+					Eigen::Vector3f positionzero;
+					positionzero(0) = point_in_zero->x;
+					positionzero(1) = point_in_zero->y;
+					positionzero(2) = point_in_zero->z;
+
+					pos_claster_viewer->addSphere(*check_point, 0.005f, 1.0f, 1.0f, 1.0f, ss.str());
+				}*/
+			}
+			else{
+				std::cout << "Layer haven't removers..." << std::endl;
 			}
 
 			//Show actual and removed objects
  			if (storage->ObjectList.size()){ //DEBUG
 				for (int i = 0; i < storage->ObjectList.size(); i++){
 					std::stringstream ss;
-					ss << "Actual_objects_" << i;
+					ss << "object_" << i;
 
-					std::cout << "Position: " << std::endl << "x " << storage->ObjectList[i]->position(0) << std::endl << "y " << storage->ObjectList[i]->position(1) << std::endl << "z " << storage->ObjectList[i]->position(2) << std::endl;
+					/*std::cout << "Position: " << std::endl << "x " << storage->ObjectList[i]->position(0) << std::endl << "y " << storage->ObjectList[i]->position(1) << std::endl << "z " << storage->ObjectList[i]->position(2) << std::endl;
 					std::cout << "width: " << storage->ObjectList[i]->width << std::endl;
 					std::cout << "lenght: " << storage->ObjectList[i]->lenght << std::endl;
-					std::cout << "height: " << storage->ObjectList[i]->height << std::endl;
+					std::cout << "height: " << storage->ObjectList[i]->height << std::endl;*/
 
 					pos_claster_viewer->addCube(storage->ObjectList[i]->position,
 						storage->ObjectList[i]->quaternion_to_bbox,
@@ -330,8 +346,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 
 		delta_viewer->spinOnce();
-		//pos_claster_viewer->spinOnce(); //DEBUG
-		//neg_claster_viewer->spinOnce(); //DEBUG
+		pos_claster_viewer->spinOnce(); //DEBUG
+		neg_claster_viewer->spinOnce(); //DEBUG
 		boost::this_thread::sleep(boost::posix_time::microseconds(100));
 	}
 

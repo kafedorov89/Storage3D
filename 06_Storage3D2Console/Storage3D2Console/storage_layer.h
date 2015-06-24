@@ -77,7 +77,7 @@ public:
 	vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> NegativeClasterList; //Кластеры найденные в облаке отрицательной дельты
 
 	vector<StoredObject*> objectForAddList; //Массив типа <int> идентификаторов объектов добавленных на слое
-	vector<StoredObject*> objectEraserList; //Массив объектов которые должны поглотить удаляемые объекты
+	vector<StoredObject*> removerList; //Массив объектов которые должны поглотить удаляемые объекты
 
 	//----------------------------------------------------------------------------------------------
 	//Методы слоя
