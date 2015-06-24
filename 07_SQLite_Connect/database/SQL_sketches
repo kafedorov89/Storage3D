@@ -1,0 +1,61 @@
+SELECT * 
+	FROM 
+		object 
+	WHERE 
+		removed = 'true'
+;
+
+SELECT *
+	FROM 
+		object
+	WHERE
+		add_date > '2014-01-01 10:00:15'
+;
+
+
+INSERT INTO 
+	object(
+		name, 
+		add_date, 
+		position_x, 
+		position_y, 
+		position_z, 
+		width, 
+		lenght, 
+		height, 
+		roll, 
+		pitch, 
+		yaw
+		) 
+	VALUES(
+		'Test object #1', 
+		'2015-01-01 10:00:00', 
+		1, 
+		1.0, 
+		3.1, 
+		30, 
+		20.0, 
+		40, 
+		0, 
+		0, 
+		61
+		)
+;
+
+UPDATE object SET remove_date = '2007-01-01 10:00:00', removed = 'true' WHERE uid = 1;
+
+INSERT INTO object(uid, name, add_date, remove_date, removed, position_x, position_y, position_z, width, lenght, height, roll, pitch, yaw) VALUES(uid, name, '2007-01-01 10:00:00', '2013-01-01 10:00:00', removed, position_x, position_y, position_z, width, lenght, height, roll, pitch, yaw);
+--
+-- Файл сгенерирован с помощью SQLiteStudio v3.0.6 в Ср июн 24 10:52:53 2015
+--
+-- Использованная кодировка текста: windows-1251
+--
+PRAGMA foreign_keys = off;
+BEGIN TRANSACTION;
+
+-- Таблица: object
+
+
+
+COMMIT TRANSACTION;
+PRAGMA foreign_keys = on;
