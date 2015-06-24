@@ -134,14 +134,32 @@ public:
 	//-----------------------------------------------------------------------------------------------
 	//Методы хранимого объекта
 	StoredObject();
-	StoredObject::StoredObject(const StoredObject& storedobject);
-	StoredObject(int layerid, 
+	StoredObject(const StoredObject& storedobject);
+	StoredObject(
+		int layerid, 
 		int storageid, 
 		int uid, 
 		pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, 
-		int stepdegree = 1, 
-		int maxdegree = 90, 
-		float objectdensity = 0.02f); //Конструктор класса Stored3Dobject
+		int stepdegree, 
+		int maxdegree, 
+		float objectdensity,
+		string objectname = ""); //Конструктор класса Stored3Dobject
+	StoredObject(
+		int dbuid,
+		string dbname,
+		time_t dbadd_date,
+		time_t dbremove_date,
+		bool dbremoved,
+		float dbposition_x,
+		float dbposition_y,
+		float dbposition_z,
+		float dbwidth,
+		float dblenght,
+		float dbheight,
+		float dbroll,
+		float dbpitch,
+		float dbyaw);
+
 	~StoredObject();
 
 	void check_2d_valid_object(float limit_array[6], float valid_percent);

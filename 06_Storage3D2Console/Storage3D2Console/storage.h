@@ -47,6 +47,10 @@
 #include "storage_layer.h" 
 #include "PCLFunctions.h"
 
+#include <iostream>
+#include <time.h>
+#include "sqlite/SQLiteDatabase.h"
+
 using namespace std;
 
 class Storage
@@ -67,12 +71,13 @@ public:
 	bool enablePlaneFiltration; 
 	bool enableNoizeFiltration;
 	bool enableVoxelFiltration;
-
+	char* dbName;
 
 	float PlaneClasterTollerance;
 	int MinPlaneClasterSize;
 	int MaxPlaneClasterSize;
 	float CloudZStep;
+	SQLiteDatabase* DataBase;
 
 	float ObjectLimitSize[6];
 
@@ -82,7 +87,8 @@ public:
 		float deltalimit,
 		bool enablevoxelfiltration,
 		bool enableplanefiltration,
-		bool enablenoizefiltration);
+		bool enablenoizefiltration,
+		char* dbname);
 	~Storage();
 
 	void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep); //Функция вычисления Delta в реальных координатах для добавленного слоя
@@ -91,4 +97,13 @@ public:
 	void RemoveObject(int objectID); //Функция удаления i-го объекта со склада 
 	void FindObjects(int LayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция поиска объектов, добавленных на новом слое
 	void AddNewLayer(StorageLayer& newLayer); //Функция добавления нового слоя
+	
+	void initStorageFromDB();
+	void saveStorageToDB();
+
+	vector<int> GetAllObjects();
+	vector<int> GetActualObjects();
+	vector<int> GetRemovedObjects();
+	vector<int> GetObjectsByPointXYZ(pcl::PointXYZ& testpoint);
+	vector<int> GetObjectsAddedInTimeInterval(time_t starttime, time_t endtime);
 };

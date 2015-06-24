@@ -31,6 +31,7 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	lenght = storedobject.lenght;
 	height = storedobject.height;
 	square = storedobject.square;
+	ObjectName = storedobject.ObjectName;
 
 	//position = new Eigen::Vector3f(*storedobject.position);
 	//quaternion_to_bbox = storedobject.quaternion_to_bbox;//new Eigen::Quaternionf(*storedobject.quaternion_to_bbox);
@@ -44,13 +45,15 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	jump_to_zero = storedobject.jump_to_zero;
 }
 
-StoredObject::StoredObject(int layerid, 
+StoredObject::StoredObject(
+	int layerid, 
 	int storageid, 
 	int uid, 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, 
 	int stepdegree, 
 	int maxdegree, 
-	float objectdensity)
+	float objectdensity, 
+	string objectname)
 {
 	addedLayerID = layerid;
 	
@@ -80,7 +83,49 @@ StoredObject::StoredObject(int layerid,
 
 	isValid = false;
 
+	ObjectName = objectname;
 	
+
+	//find_bbox();
+	//check_valid_object();
+	//check_isinside_point(pcl::PointXYZ(0, 0, 0));
+}
+
+//Constructor for init object from database
+StoredObject::StoredObject(
+	int dbuid, 
+	string dbname, 
+	time_t dbadd_date, 
+	time_t dbremove_date, 
+	bool dbremoved, 
+	float dbposition_x, 
+	float dbposition_y, 
+	float dbposition_z, 
+	float dbwidth, 
+	float dblenght, 
+	float dbheight, 
+	float dbroll, 
+	float dbpitch, 
+	float dbyaw)
+{
+	UID = dbuid;
+	ObjectName = dbname;
+
+	AddedDate = dbadd_date;
+	RemovedDate = dbremove_date;
+	removed = dbremoved;
+
+	width = dbwidth;
+	lenght = dblenght;
+	height = dbheight;
+
+	roll = dbroll;
+	pitch = dbpitch;
+	yaw = dbyaw;
+
+	position(0) = dbposition_x;
+	position(1) = dbposition_y;
+	position(2) = dbposition_z;
 
 	//find_bbox();
 	//check_valid_object();

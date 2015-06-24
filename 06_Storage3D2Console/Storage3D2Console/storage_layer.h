@@ -69,6 +69,7 @@ public:
 	int storageUID; //Уникальный числовой идентификатор склада
 	time_t AddedDate; //Время добавления слоя
 	float planeDensity;
+	char* last_file_name;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr layerNegativeDelta; //Массив типа <float> отрицательных разниц высот точек на данном слое по отношению к предыдущему
 	pcl::PointCloud<pcl::PointXYZ>::Ptr layerPositiveDelta; //Массив типа <float> положительных разниц высот точек на данном слое по отношению к предыдущему 

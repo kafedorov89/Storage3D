@@ -13,7 +13,6 @@ using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	using namespace std;
 	SQLiteDatabase *db;
 	db = new SQLiteDatabase("Storage3D.sqlite");
 	//db->query("CREATE TABLE a (a INTEGER, b INTEGER);");

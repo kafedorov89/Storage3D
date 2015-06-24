@@ -1,7 +1,5 @@
 #include "stdafx.h"
 #include "SQLiteDatabase.h"
-
-#include "SQLiteDatabase.h"
 #include <iostream>
 
 SQLiteDatabase::SQLiteDatabase(char* filename)

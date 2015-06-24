@@ -9,13 +9,15 @@ Storage::Storage(int uid,
 	float deltalimit,
 	bool enablevoxelfiltration,
 	bool enableplanefiltration,
-	bool enablenoizefiltration)
+	bool enablenoizefiltration, 
+	char* dbname)
 {
 	UID = uid;
 	deltaLimit = deltalimit;
 	enableVoxelFiltration = enablevoxelfiltration;
 	enablePlaneFiltration = enableplanefiltration;
 	enableNoizeFiltration = enablenoizefiltration;
+	*dbName = *dbname;
 }
 
 Storage::~Storage()
@@ -67,7 +69,7 @@ void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClaste
 	float cur_planeDensity = LayerList[llSize - 1]->planeDensity;
 	
 
-	/*float min_mult = 1;
+	/*float min_mult = 1; //FIXME. Add flexible settings for density and points count
 	float max_mult = 10;
 	float toll_milt = 1.5;
 	float step_milt = 3;
@@ -289,11 +291,55 @@ void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового
 	//FIXME
 }
 
-void initStorageFromDB(char* db_name){
-	db_name
+void Storage::initStorageFromDB(){
+	DataBase = new SQLiteDatabase(dbName);
+	char* select_query = "";
 
-		//Select all actual objects from DB
+	//Select fields of all actual objects from DB
+	vector<vector<string>> result = DataBase->query(select_query);
+	
+	//Create objects with received fields and add to storage's ObjectList
+	for (vector<vector<string>>::iterator it = result.begin(); it < result.end(); ++it)
+	{
+		vector<string> row = *it;
+		struct tm tm;
+		std::strftime(row.at(2).c_str(), sizeof(row.at(2).c_str()), "%H:%M:%S", &tm);
+		time_t t = mktime(&tm);  // t is now your desired time_t
 
-
-
+		struct tm tm;
+		strptime(row.at(2), "%H:%M:%S", &tm);
+		time_t t = mktime(&tm);  // t is now your desired time_t
+		, row.at(3)
+		
+		
+		AddNewObject(*(new StoredObject(atoi(row.at(0).c_str()), row.at(1),    ,     , row.at(4), row.at(5), row.at(6), row.at(7), row.at(8), row.at(9), row.at(10), row.at(11), row.at(12), row.at(13))));
+	}
+	DataBase->close();	
 }
+
+void Storage::saveStorageToDB(){
+	/*UID = dbuid;
+	ObjectName = dbname;
+
+	AddedDate = dbadd_date;
+	RemovedDate = dbremove_date;
+	removed = dbremoved;
+
+	width = dbwidth;
+	lenght = dblenght;
+	height = dbheight;
+
+	roll = dbroll;
+	pitch = dbpitch;
+	yaw = dbyaw;
+
+	position(0) = dbposition_x;
+	position(1) = dbposition_y;
+	position(2) = dbposition_z;*/
+}
+
+vector<int> Storage::GetAllObjects();
+vector<int> Storage::GetActualObjects();
+vector<int> Storage::GetRemovedObjects();
+vector<int> Storage::GetObjectsByPointXYZ(pcl::PointXYZ& testpoint);
+vector<int> Storage::GetObjectsAddedInTimeInterval(time_t starttime, time_t endtime);

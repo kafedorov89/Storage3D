@@ -23,11 +23,13 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	//KinectGrabber grabber = KinectGrabber(0, false);
 	KinectGrab *grabber = new KinectGrab();
+	bool inited_from_file = false;
 	//Storage *storage = new Storage(delta_limit, plane_threshold);
-	Storage* storage = new Storage(1, delta_limit, enable_voxelgridfiltration, enable_planefiltration, enable_noizefiltration);
+	Storage* storage = new Storage(1, delta_limit, enable_voxelgridfiltration, enable_planefiltration, enable_noizefiltration, "Storage3D.sqlite");
 
+	std::cout << "Loading state from database..." << std::endl;
 	if (work_with_db){
-		storage->initStorageFromDB("Storage3D.sqlite");
+		storage->initStorageFromDB();
 	}
 
 	pcl::visualization::PCLVisualizer *delta_viewer = new pcl::visualization::PCLVisualizer("Delta Viewer");
@@ -37,8 +39,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> LayerFromFile;
 	int layerUID = 0;
 
+	StorageLayer* oldlayer = new StorageLayer(layerUID, storage->UID);
+
 	//Loading files instead stream from 3D-scanner
 	if (working_with_file){
+		std::cout << "Working with files..." << std::endl;
 		string dirpath = "./pcd/experimental_pcd/";
 		DIR *dir = opendir(dirpath.c_str());
 
@@ -64,18 +69,65 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		else
 		{
-			cout << "Error opening directory" << endl;
+			cout << "Error opening directory!" << endl;
 		}
-	}
 
-	try{
-		grabber = new KinectGrab(false);
+		//Save first layer
+		oldlayer->DepthMap = LayerFromFile[layerUID];
 	}
-	catch (std::exception& e){
-		std::cout << "Kinect error: " << e.what() << std::endl;
-		//cin.get();
-		if(!working_with_file)
-			return 0;
+	else{
+		std::cout << "Working with Kinect..." << std::endl;
+
+		try{
+			grabber = new KinectGrab(false);
+		}
+		catch (std::exception& e){
+			std::cout << "Kinect error: " << e.what() << "!" << std::endl;
+			//cin.get();
+			if (!working_with_file)
+				return 0;
+		}
+
+		//Try to find previous saved state of Storage
+		string dirpath = "./database/";
+		DIR *dir = opendir(dirpath.c_str());
+
+		if (dir)
+		{
+			struct dirent *ent;
+			int i = 0;
+			while ((ent = readdir(dir)) != NULL)
+			{
+				i++;
+				if (((std::string)ent->d_name).find(oldlayer->last_file_name) != string::npos)
+				{
+					std::stringstream ss;
+					ss << dirpath << ent->d_name;
+					std::cout << ss.str() << std::endl;
+					pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+					//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = new pcl::PointCloud<pcl::PointXYZ>();
+					pcl::io::loadPCDFile(ss.str(), *cloud);
+
+					oldlayer->DepthMap = cloud;
+					inited_from_file = true;
+				}
+			}
+		}
+		else
+		{
+			cout << "Error opening directory!" << endl;
+		}
+		
+		if (!inited_from_file){
+
+			//Grab layer
+			grabber->start();
+			grabber->getCloud();
+
+			//Save first layer
+			oldlayer->DepthMap = grabber->PointCloudXYZPtr; //FIXME. Add initialization from file or from last saved layer's DepthMap
+			oldlayer->SaveLayerToPCD(true, save_only_last);
+		}
 	}
 
 	delta_viewer->setBackgroundColor(0, 0, 0);
@@ -95,31 +147,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	neg_claster_viewer->setPosition(0, 600);
 	neg_claster_viewer->loadCameraParameters("viewer.ini");
 
-	//Grab layer
-	StorageLayer* oldlayer = new StorageLayer(layerUID, storage->UID);
-	if (working_with_file){
-		oldlayer->DepthMap = LayerFromFile[layerUID];
-	}
-	else{
-		//Grab layer
-		grabber->start();
-		grabber->getCloud();
-		
-		//Save first layer
-		oldlayer->DepthMap = grabber->PointCloudXYZPtr; //FIXME. Add initialization from file or from last saved layer's DepthMap
-	}
-
-	if (saving_state){
-		oldlayer->SaveLayerToPCD(true, save_only_last);
-	}
-
 	oldlayer->planeDensity = plane_density;
 	storage->AddNewLayer(*oldlayer);
 
 	//Main cycle for listen keys press
-	std::cout << "Ready for scan layers..." << std::endl;
+	std::cout << std::endl << "Ready for scan layers..." << std::endl;
 	while (true){
-		if (GetKeyState(VK_SPACE) < 0){
+		if (GetKeyState(VK_SPACE) < 0 || inited_from_file){
+			inited_from_file = false;
 			layerUID++;
 
 			//Set camera position in viewers windows
@@ -261,48 +296,7 @@ int _tmain(int argc, _TCHAR* argv[])
 						storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->width,
 						storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->lenght,
 						storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->height, ss.str());
-
-					/*Eigen::Vector3f position = storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->position;
-					pcl::PointXYZ* check_point = new pcl::PointXYZ(position(0), position(1), position(2));
-					pcl::PointXYZ* point_in_zero = new pcl::PointXYZ(pcl::transformPoint(*check_point, *storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->jump_to_zero));
-					Eigen::Vector3f positionzero;
-					positionzero(0) = point_in_zero->x;
-					positionzero(1) = point_in_zero->y;
-					positionzero(2) = point_in_zero->z;
-
-					float width = storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->width;
-					float lenght = storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->lenght;
-					float height = storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->height;
-
-					width /= 2.0f;
-					lenght /= 2.0f;
-					height /= 2.0f;
-
-					pos_claster_viewer->addCube(-width, width, -lenght, lenght, -height, height, 1.0f, 1.0f, 1.0f, ss.str());*/
-
-					/*pos_claster_viewer->addCube(positionzero,
-					storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->quaternion_to_zero,
-					storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->width,
-					storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->lenght,
-					storage->LayerList[storage->LayerList.size() - 1]->removerList[i]->height, ss.str());*/
-
-					//pos_claster_viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0f, 0.0f, 1.0f, ss.str());
 				}
-
-				/*for (int i = 0; i < storage->ObjectList.size(); i++){
-					std::stringstream ss;
-					ss << "obj_center_" << i;
-					
-					Eigen::Vector3f position = storage->ObjectList[i]->position;
-					pcl::PointXYZ* check_point = new pcl::PointXYZ(position(0), position(1), position(2));
-					pcl::PointXYZ* point_in_zero = new pcl::PointXYZ(pcl::transformPoint(*check_point, *storage->ObjectList[i]->jump_to_bbox));
-					Eigen::Vector3f positionzero;
-					positionzero(0) = point_in_zero->x;
-					positionzero(1) = point_in_zero->y;
-					positionzero(2) = point_in_zero->z;
-
-					pos_claster_viewer->addSphere(*check_point, 0.005f, 1.0f, 1.0f, 1.0f, ss.str());
-				}*/
 			}
 			else{
 				std::cout << "Layer haven't removers..." << std::endl;
@@ -313,11 +307,6 @@ int _tmain(int argc, _TCHAR* argv[])
 				for (int i = 0; i < storage->ObjectList.size(); i++){
 					std::stringstream ss;
 					ss << "object_" << i;
-
-					/*std::cout << "Position: " << std::endl << "x " << storage->ObjectList[i]->position(0) << std::endl << "y " << storage->ObjectList[i]->position(1) << std::endl << "z " << storage->ObjectList[i]->position(2) << std::endl;
-					std::cout << "width: " << storage->ObjectList[i]->width << std::endl;
-					std::cout << "lenght: " << storage->ObjectList[i]->lenght << std::endl;
-					std::cout << "height: " << storage->ObjectList[i]->height << std::endl;*/
 
 					pos_claster_viewer->addCube(storage->ObjectList[i]->position,
 						storage->ObjectList[i]->quaternion_to_bbox,
@@ -337,13 +326,23 @@ int _tmain(int argc, _TCHAR* argv[])
 				std::cout << "Storage haven't objects..." << std::endl;
 			}
 			delete newlayer;
+
+			std::cout << "Saving state to database..." << std::endl;
+			storage->saveStorageToDB();
+
+			std::cout << std::endl << "Ready for scan layers..." << std::endl;
 		}
 
 		if (GetKeyState(VK_S) < 0){
 			delta_viewer->saveCameraParameters("viewer.ini");// getCameraFile();
 			std::cout << "Camera parameters was saved..." << std::endl;
+			boost::this_thread::sleep(boost::posix_time::microseconds(1000));
 			//break;
 		}
+
+		/*if (GetKeyState(VK_Q) < 0){
+			std::cout << "Ready for "
+		}*/
 
 		if (GetKeyState(VK_ESCAPE) < 0){
 			break;
@@ -357,12 +356,12 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	if (!working_with_file)
 	{
-		//try{
-		grabber->stop();
-		//}
-		//catch (std::exception& e){
-
-		//}
+		try{
+			grabber->stop();
+		}
+		catch (std::exception& e){
+			
+		}
 	}
 
 	return 0;
