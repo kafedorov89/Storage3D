@@ -9,8 +9,7 @@
 
 using namespace std;
 
-const char* SQL = "CREATE TABLE IF NOT EXISTS foo(a,b,c); INSERT INTO FOO VALUES(1,2,3);";
-
+//const char* SQL = "CREATE TABLE IF NOT EXISTS foo(a,b,c); INSERT INTO FOO VALUES(1,2,3);";
 
 int _tmain(int argc, _TCHAR* argv[])
 {

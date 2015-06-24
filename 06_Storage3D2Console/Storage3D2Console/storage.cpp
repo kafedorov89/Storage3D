@@ -288,3 +288,12 @@ void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового
 	ObjectList.push_back(newObject);
 	//FIXME
 }
+
+void initStorageFromDB(char* db_name){
+	db_name
+
+		//Select all actual objects from DB
+
+
+
+}

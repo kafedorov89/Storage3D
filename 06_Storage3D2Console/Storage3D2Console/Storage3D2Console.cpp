@@ -26,6 +26,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	//Storage *storage = new Storage(delta_limit, plane_threshold);
 	Storage* storage = new Storage(1, delta_limit, enable_voxelgridfiltration, enable_planefiltration, enable_noizefiltration);
 
+	if (work_with_db){
+		storage->initStorageFromDB("Storage3D.sqlite");
+	}
+
 	pcl::visualization::PCLVisualizer *delta_viewer = new pcl::visualization::PCLVisualizer("Delta Viewer");
 	pcl::visualization::PCLVisualizer *pos_claster_viewer = new pcl::visualization::PCLVisualizer("Positive Claster Viewer"); //DEBUG
 	pcl::visualization::PCLVisualizer *neg_claster_viewer = new pcl::visualization::PCLVisualizer("Negative Claster Viewer"); //DEBUG
@@ -106,7 +110,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	if (saving_state){
-		oldlayer->SaveLayerToPCD(true);
+		oldlayer->SaveLayerToPCD(true, save_only_last);
 	}
 
 	oldlayer->planeDensity = plane_density;
@@ -160,7 +164,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			storage->CalcNewLayerDelta(plane_claster_tolerance, min_plane_claster_size,	max_plane_claster_size, cloud_z_step);
 			
 			if (saving_state){
-				newlayer->SaveLayerToPCD();
+				newlayer->SaveLayerToPCD(false, save_only_last);
 			}
 
 			//Show positive delta cloud

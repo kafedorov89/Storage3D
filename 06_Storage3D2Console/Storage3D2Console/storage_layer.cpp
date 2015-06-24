@@ -44,25 +44,31 @@ StorageLayer::~StorageLayer(){
 }
 
 
-void StorageLayer::SaveLayerToPCD(bool firstLayer){
-	time_t rawtime;
-	struct tm * timeinfo;
-	std::string timestring;
+void StorageLayer::SaveLayerToPCD(bool firstLayer, bool lastmodeon){
+	if (!lastmodeon){
+		time_t rawtime;
+		struct tm * timeinfo;
+		std::string timestring;
 
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
 
-	timestring = std::to_string(timeinfo->tm_sec) +
-		std::to_string(timeinfo->tm_hour) +
-		std::to_string(timeinfo->tm_min) +
-		std::to_string(timeinfo->tm_mday) +
-		std::to_string(timeinfo->tm_mon) +
-		std::to_string(timeinfo->tm_year);
-	
-	if (!firstLayer){
-		pcl::io::savePCDFileBinaryCompressed("delta_pos_cloud_" + timestring + ".pcd", *layerPositiveDelta);
-		pcl::io::savePCDFileBinaryCompressed("delta_neg_cloud_" + timestring + ".pcd", *layerNegativeDelta);
+		timestring = std::to_string(timeinfo->tm_sec) +
+			std::to_string(timeinfo->tm_hour) +
+			std::to_string(timeinfo->tm_min) +
+			std::to_string(timeinfo->tm_mday) +
+			std::to_string(timeinfo->tm_mon) +
+			std::to_string(timeinfo->tm_year);
+
+		if (!firstLayer){
+			pcl::io::savePCDFileBinaryCompressed("delta_pos_cloud_" + timestring + ".pcd", *layerPositiveDelta);
+			pcl::io::savePCDFileBinaryCompressed("delta_neg_cloud_" + timestring + ".pcd", *layerNegativeDelta);
+		}
+
+		pcl::io::savePCDFileBinaryCompressed("layer_cloud_" + timestring + ".pcd", *DepthMap);
+	}else{
+		std::remove("last_layer.pcd");
+		
+		pcl::io::savePCDFileBinaryCompressed("last_layer.pcd", *DepthMap);
 	}
-
-	pcl::io::savePCDFileBinaryCompressed("layer_cloud_" + timestring + ".pcd", *DepthMap);
 }

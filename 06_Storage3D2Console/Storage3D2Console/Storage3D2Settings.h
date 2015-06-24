@@ -34,6 +34,8 @@ bool saving_state;
 float object_density;
 float plane_density;
 bool enable_voxelgridfiltration;
+bool work_with_db;
+bool save_only_last;
 
 using namespace std;
 
@@ -98,6 +100,10 @@ void loadSettingsFile(){
 				working_with_file = key.second.get_value<bool>();
 			if (key.first == "saving_state")
 				saving_state = key.second.get_value<bool>();
+			if (key.first == "save_only_last")
+				save_only_last = key.second.get_value<bool>();
+			if (key.first == "work_with_db")
+				work_with_db = key.second.get_value<bool>();
 		}
 	}
 }

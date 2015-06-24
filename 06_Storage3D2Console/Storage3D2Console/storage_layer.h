@@ -86,5 +86,5 @@ public:
 	StorageLayer(int layeruid, int storageuid); //Конструктор класса StorageLayer
 	~StorageLayer();
 
-	void SaveLayerToPCD(bool firstLayer = false);
+	void SaveLayerToPCD(bool firstLayer = false, bool lastmodeon = false);
 };
