@@ -50,3 +50,4 @@ void FindClasters(pcl::PointCloud<pcl::PointXYZ>::Ptr deltacloud, vector<pcl::Po
 float GetPointDelatZ(pcl::PointXYZ &new_Point, pcl::PointCloud<pcl::PointXY>::Ptr old2d_cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr old_cloud, pcl::KdTreeFLANN<pcl::PointXY> &kdtree, int &oldpointindex);
 float GetNPointsDelatZ(pcl::PointXYZ &new_Point, pcl::PointCloud<pcl::PointXY>::Ptr old2d_cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr old_cloud, pcl::KdTreeFLANN<pcl::PointXY> &kdtree, int pointscount = 1);
 void Get2DCloudFrom3D(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud3d, pcl::PointCloud<pcl::PointXY>::Ptr &cloud2d);
+bool str_to_bool(string boolstr);

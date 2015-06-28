@@ -205,3 +205,12 @@ void Get2DCloudFrom3D(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud3d, pcl::PointClo
 		cloud2d->push_back(*old2d_Point);
 	}
 }
+
+bool str_to_bool(string boolstr){
+	if (boolstr == "TRUE" || boolstr == "1" || boolstr == "true"){
+		return true;
+	}
+	else{
+		return false;
+	}
+}

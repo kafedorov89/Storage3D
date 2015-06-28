@@ -84,8 +84,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		catch (std::exception& e){
 			std::cout << "Kinect error: " << e.what() << "!" << std::endl;
 			//cin.get();
-			if (!working_with_file)
-				return 0;
+			return 0;
 		}
 
 		//Try to find previous saved state of Storage
@@ -130,6 +129,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 	}
 
+	//Opening and setting pcl vizualizer's windows
 	delta_viewer->setBackgroundColor(0, 0, 0);
 	delta_viewer->addCoordinateSystem(1.0);
 	delta_viewer->setPosition(960, 0);

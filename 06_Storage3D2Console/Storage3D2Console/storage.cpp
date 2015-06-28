@@ -293,7 +293,7 @@ void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового
 
 void Storage::initStorageFromDB(){
 	DataBase = new SQLiteDatabase(dbName);
-	char* select_query = "";
+	char* select_query = "SELECT * FROM object WHERE removed = 'FALSE';";
 
 	//Select fields of all actual objects from DB
 	vector<vector<string>> result = DataBase->query(select_query);
@@ -302,22 +302,59 @@ void Storage::initStorageFromDB(){
 	for (vector<vector<string>>::iterator it = result.begin(); it < result.end(); ++it)
 	{
 		vector<string> row = *it;
-		struct tm tm;
-		std::strftime(row.at(2).c_str(), sizeof(row.at(2).c_str()), "%H:%M:%S", &tm);
-		time_t t = mktime(&tm);  // t is now your desired time_t
 
-		struct tm tm;
-		strptime(row.at(2), "%H:%M:%S", &tm);
-		time_t t = mktime(&tm);  // t is now your desired time_t
-		, row.at(3)
+		int dbuid = std::atoi(row.at(0).c_str());
 		
+		string dbname = row.at(1);
 		
-		AddNewObject(*(new StoredObject(atoi(row.at(0).c_str()), row.at(1),    ,     , row.at(4), row.at(5), row.at(6), row.at(7), row.at(8), row.at(9), row.at(10), row.at(11), row.at(12), row.at(13))));
+		struct tm tmadd;
+		char* addedtimestr = (char *)row.at(2).c_str();
+		std::strftime(addedtimestr, sizeof(addedtimestr), "%F %T", &tmadd);
+		time_t dbadd_date = mktime(&tmadd);  // t is now your desired time_t
+
+		struct tm tmrem;
+		char* addedtimestr = (char *)row.at(3).c_str();
+		std::strftime(addedtimestr, sizeof(addedtimestr), "%F %T", &tmrem);
+		time_t dbremove_date = mktime(&tmrem);  // t is now your desired time_t
+		
+		bool dbremoved = str_to_bool(row.at(5));
+
+		float dbposition_x = std::atof(row.at(5).c_str());
+		float dbposition_y = std::atof(row.at(6).c_str());
+		float dbposition_z = std::atof(row.at(7).c_str());
+
+		float dbwidth = std::atof(row.at(8).c_str());
+		float dblenght = std::atof(row.at(9).c_str());
+		float dbheight = std::atof(row.at(10).c_str());
+
+		float dbroll = std::atof(row.at(11).c_str());
+		float dbpitch = std::atof(row.at(12).c_str());
+		float dbyaw = std::atof(row.at(13).c_str());
+
+		AddNewObject(*(new StoredObject(
+			dbuid, 
+			dbname, 
+			dbadd_date, 
+			dbremove_date, 
+			dbremoved, 
+			dbposition_x,
+			dbposition_y,
+			dbposition_z,
+			dbwidth,
+			dblenght,
+			dbheight,
+			dbroll, 
+			dbpitch, 
+			dbyaw)));
 	}
-	DataBase->close();	
+	DataBase->close();
 }
 
 void Storage::saveStorageToDB(){
+	//For each object in current state of storage checking for existing infornation in database and update this.
+	
+	for (int i = 0; Object)
+
 	/*UID = dbuid;
 	ObjectName = dbname;
 
@@ -338,8 +375,22 @@ void Storage::saveStorageToDB(){
 	position(2) = dbposition_z;*/
 }
 
-vector<int> Storage::GetAllObjects();
-vector<int> Storage::GetActualObjects();
-vector<int> Storage::GetRemovedObjects();
-vector<int> Storage::GetObjectsByPointXYZ(pcl::PointXYZ& testpoint);
-vector<int> Storage::GetObjectsAddedInTimeInterval(time_t starttime, time_t endtime);
+vector<int> Storage::GetAllObjects(){
+
+}
+
+vector<int> Storage::GetActualObjects(){
+
+}
+
+vector<int> Storage::GetRemovedObjects(){
+
+}
+
+vector<int> Storage::GetObjectsByPointXYZ(pcl::PointXYZ& testpoint){
+
+}
+
+vector<int> Storage::GetObjectsAddedInTimeInterval(time_t starttime, time_t endtime){
+
+}
