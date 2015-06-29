@@ -288,7 +288,37 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового объекта
 	StoredObject* newObject = new StoredObject(newobject);
 	ObjectList.push_back(newObject);
-	//FIXME
+	string select_query;
+	ostringstream querystring;              //создаем поток вывода
+	querystring << "SELECT * FROM object WHERE uid = " << newObject->UID << ";";
+	select_query = querystring.str();
+
+
+	//Adding new object to database if it isn't exist
+	DataBase = new SQLiteDatabase(dbName);
+
+	//Select fields of all actual objects from DB
+	vector<vector<string>> result = DataBase->query((char*)select_query.c_str());
+
+	if (result.size() > 0){
+		querystring.clear();
+		querystring << "UPDATE object SET " <<
+			"uid = " << UID << "," <<
+			name = ObjectName,
+			add_date = AddedDate,
+			remove_date = RemovedDate,
+			removed = removed,
+			width = width,
+			lenght = lenght,
+			height = height,
+			roll = roll,
+			pitch = pitch,
+			yaw = yaw,
+			position_x = position(0),
+			position_y = position(1),
+			position_z = position(2) <<
+			" WHERE uid = " << newObject->UID << "; ";
+	}
 }
 
 void Storage::initStorageFromDB(){
@@ -351,11 +381,24 @@ void Storage::initStorageFromDB(){
 }
 
 void Storage::saveStorageToDB(){
-	//For each object in current state of storage checking for existing infornation in database and update this.
-	
-	for (int i = 0; Object)
+	/*//For each object in current state of storage checking for existing infornation in database and update this.
+	DataBase = new SQLiteDatabase(dbName);
+	char* select_query = "SELECT * FROM object WHERE removed = 'FALSE';";
 
-	/*UID = dbuid;
+	//Select fields of all actual objects from DB
+	vector<vector<string>> result = DataBase->query(select_query);
+
+	//Create objects with received fields and add to storage's ObjectList
+	for (vector<vector<string>>::iterator it = result.begin(); it < result.end(); ++it)
+	{
+		vector<string> row = *it;
+
+		for (int i = 0; ObjectList.size(); i++){
+
+		}
+	}
+
+	UID = dbuid;
 	ObjectName = dbname;
 
 	AddedDate = dbadd_date;

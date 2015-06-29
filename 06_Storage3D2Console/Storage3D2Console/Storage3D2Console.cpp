@@ -29,7 +29,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	std::cout << "Loading state from database..." << std::endl;
 	if (work_with_db){
-		storage->initStorageFromDB();
+		storage->initStorageFromDB(); //Keep that initialize db could be used with correct start state (same state as was saved in last exit)
 	}
 
 	pcl::visualization::PCLVisualizer *delta_viewer = new pcl::visualization::PCLVisualizer("Delta Viewer");
