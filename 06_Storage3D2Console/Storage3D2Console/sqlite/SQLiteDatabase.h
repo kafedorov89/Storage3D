@@ -11,6 +11,7 @@ using namespace std;
 class SQLiteDatabase
 {
 public:
+	SQLiteDatabase();
 	SQLiteDatabase(char* filename);
 	~SQLiteDatabase();
 

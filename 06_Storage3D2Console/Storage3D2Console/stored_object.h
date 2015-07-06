@@ -134,7 +134,9 @@ public:
 	//-----------------------------------------------------------------------------------------------
 	//Методы хранимого объекта
 	StoredObject();
+	
 	StoredObject(const StoredObject& storedobject);
+	
 	StoredObject(
 		int layerid, 
 		int storageid, 
@@ -144,12 +146,11 @@ public:
 		int maxdegree, 
 		float objectdensity,
 		string objectname = ""); //Конструктор класса Stored3Dobject
+	
 	StoredObject(
 		int dbuid,
 		string dbname,
 		time_t dbadd_date,
-		time_t dbremove_date,
-		bool dbremoved,
 		float dbposition_x,
 		float dbposition_y,
 		float dbposition_z,

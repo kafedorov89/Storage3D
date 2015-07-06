@@ -17,7 +17,7 @@ Storage::Storage(int uid,
 	enableVoxelFiltration = enablevoxelfiltration;
 	enablePlaneFiltration = enableplanefiltration;
 	enableNoizeFiltration = enablenoizefiltration;
-	*dbName = *dbname;
+	dbName = dbname;
 }
 
 Storage::~Storage()
@@ -164,7 +164,46 @@ void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoi
 }
 
 void Storage::RemoveObject(int objectID){ //Функция удаления i-го объекта со склада 
+	string select_query, update_query;
+	ostringstream querystring;
+	ostringstream querystring2;
+	querystring << "SELECT uid FROM object WHERE uid = '" << ObjectList[objectID]->UID << "';";
+	select_query = querystring.str();
+
+	//Adding new object to database if it isn't exist
+	DataBase = new SQLiteDatabase();
+	DataBase->open(dbName);
+
+	//Select fields of all actual objects from DB
+	vector<vector<string>> result = DataBase->query((char*)select_query.c_str());
+
+	if (result.size() > 0){
+		time_t now = time(NULL);
+		struct tm * timeinfo;
+		ostringstream RemovedDate;
+		timeinfo = localtime(&now);
+		RemovedDate << std::to_string(1900 + timeinfo->tm_year) << "-" <<
+			std::to_string(timeinfo->tm_mon) << "-" <<
+			std::to_string(timeinfo->tm_mday) << " " <<
+			std::to_string(timeinfo->tm_hour) << ":" <<
+			std::to_string(timeinfo->tm_min) << ":" <<
+			std::to_string(timeinfo->tm_sec);
+
+		//querystring.clear();
+		
+		querystring2 << "UPDATE object SET " <<
+			"remove_date = " << "'" << RemovedDate.str() << "'" << ", " <<
+			"removed = 'TRUE'" <<
+			" WHERE uid = '" << ObjectList[objectID]->UID << "'; ";
+	
+		update_query = querystring2.str();
+
+		DataBase->query((char*)update_query.c_str());
+	}
+
 	ObjectList[objectID]->Remove();
+
+	DataBase->close();
 }
 
 void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового слоя
@@ -179,7 +218,6 @@ void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового с
 	LayerList.push_back(new_Layer);
 	//FIXME
 }
-
 
 void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов, добавленных на новом слое
 	//int llSize = LayerList.size();
@@ -229,8 +267,14 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 				//About one object
 				else if (center_height > ObjectLimitSize[2] && center_height < ObjectLimitSize[5]){
 					test_object->isValid = true;
+					test_object->UID = (int)rawtime;
 					test_object->position(2) = testPoint->z + 0.5f * center_height; //Plus (+) because oZ axis is up side down
 					test_object->height = center_height;
+
+					//Manual settings object's name
+					std::cout << "Enter object name: ";
+					std::cin >> test_object->ObjectName;
+					std::cout << std::endl;
 
 					test_object->CalcJamp();
 
@@ -239,14 +283,22 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 				//Several objects
 				else if (center_height > ObjectLimitSize[5])
 				{
-					//Manual settings of obj_count or obj_height 
-					//int obj_count 
-					//std::cin >> obj_count;
+					//Manual settings obj_count or obj_height 
+					std::cout << "Several objects was found. Set count: ";
+					int obj_count = 0; //DEBUG
+					float obj_height = 0;
+					std::cin >> obj_count;
 
 					test_object->isGroup = true;
-					int obj_count = (float)center_height / (float)ObjectLimitSize[2]; //FIXME. Возможна набегающая погрешность при большом количестве объектов и одновременно большом диапозоне между maxz = ObjectLimitSize[5] и minz = ObjectLimitSize[2]
+					//int obj_count = (float)center_height / (float)ObjectLimitSize[2]; //FIXME. Возможна набегающая погрешность при большом количестве объектов и одновременно большом диапозоне между maxz = ObjectLimitSize[5] и minz = ObjectLimitSize[2]
 					float zero_level = testPoint->z + center_height; //Plus (+) because oZ axis is up side down
-					float obj_height = center_height / obj_count;
+
+					if (obj_count > 1){
+						obj_height = center_height / obj_count;
+					}
+					else if (obj_count == 1){
+						obj_height = (ObjectLimitSize[2] + ObjectLimitSize[5]) / 2.0f;
+					}
 
 					for (int k = 0; k < obj_count; k++){
 						time(&rawtime);
@@ -254,6 +306,13 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 						StoredObject *k_object = new StoredObject(*test_object);
 						k_object->isValid = true;
 						k_object->UID = (int)rawtime;
+
+						//Manual settings object's name
+						std::cout << "Enter " << k << "-object name: ";
+						std::cin >> k_object->ObjectName;
+						std::cout << std::endl;
+
+
 						k_object->height = obj_height;
 						k_object->position(2) = zero_level - obj_height * 0.5 - k * obj_height; //Minus (-) because oZ axis is up side down
 
@@ -272,7 +331,6 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 				for (int i = 0; i < LayerList[curLayerUID]->objectForAddList.size(); i++){
 					AddNewObject(*LayerList[curLayerUID]->objectForAddList[i]);
 					std::cout << i + 1 << " object was added" << std::endl;
-
 				}
 			}
 			else{
@@ -285,103 +343,132 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 	}
 }
 
+void Storage::AddObjectFromDatabase(StoredObject& newobject){
+	StoredObject* newObject = new StoredObject(newobject);
+	newObject->CalcJamp();
+	
+	ObjectList.push_back(newObject);
+}
+
 void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового объекта
 	StoredObject* newObject = new StoredObject(newobject);
 	ObjectList.push_back(newObject);
-	string select_query;
-	ostringstream querystring;              //создаем поток вывода
-	querystring << "SELECT * FROM object WHERE uid = " << newObject->UID << ";";
-	select_query = querystring.str();
 
+	time_t now = time(NULL);
+	struct tm * timeinfo;
+	ostringstream AddedDate;
+	timeinfo = localtime(&newObject->AddedDate);
+	AddedDate << std::to_string(1900 + timeinfo->tm_year) << "-" <<
+		std::to_string(timeinfo->tm_mon) << "-" <<
+		std::to_string(timeinfo->tm_mday) << " " <<
+		std::to_string(timeinfo->tm_hour) << ":" <<
+		std::to_string(timeinfo->tm_min) << ":" <<
+		std::to_string(timeinfo->tm_sec);
+	
+	//FIXME. Here should be INTERSECTION checking with other existing objects in storage
 
-	//Adding new object to database if it isn't exist
-	DataBase = new SQLiteDatabase(dbName);
+	DataBase = new SQLiteDatabase();
+	DataBase->open(dbName);
+	ostringstream querystring; 
+	
+	querystring << "INSERT INTO object(uid, name, add_date, position_x, position_y, position_z, width, lenght, height, roll, pitch, yaw ) VALUES(" <<
+		newObject->UID << "," <<
+		"'" << newObject->ObjectName << "'" << "," <<
+		"'" << AddedDate.str() << "'" << "," <<
+		newObject->position(0) << "," <<
+		newObject->position(1) << "," <<
+		newObject->position(2) << "," <<
+		newObject->width << "," <<
+		newObject->lenght << "," <<
+		newObject->height << "," <<
+		newObject->roll << "," <<
+		newObject->pitch << "," <<
+		newObject->yaw << ");";
 
-	//Select fields of all actual objects from DB
-	vector<vector<string>> result = DataBase->query((char*)select_query.c_str());
-
-	if (result.size() > 0){
-		querystring.clear();
-		querystring << "UPDATE object SET " <<
-			"uid = " << UID << "," <<
-			name = ObjectName,
-			add_date = AddedDate,
-			remove_date = RemovedDate,
-			removed = removed,
-			width = width,
-			lenght = lenght,
-			height = height,
-			roll = roll,
-			pitch = pitch,
-			yaw = yaw,
-			position_x = position(0),
-			position_y = position(1),
-			position_z = position(2) <<
-			" WHERE uid = " << newObject->UID << "; ";
-	}
+	DataBase->query((char*)querystring.str().c_str());
+	DataBase->close();
 }
 
 void Storage::initStorageFromDB(){
-	DataBase = new SQLiteDatabase(dbName);
-	char* select_query = "SELECT * FROM object WHERE removed = 'FALSE';";
+	DataBase = new SQLiteDatabase();
+	DataBase->open(dbName);
+	string select_query = "SELECT uid, name, add_date, position_x, position_y, position_z, width, lenght, height, roll, pitch, yaw FROM object WHERE removed = 'FALSE';";
 
 	//Select fields of all actual objects from DB
-	vector<vector<string>> result = DataBase->query(select_query);
+	vector<vector<string>> result = DataBase->query((char*)select_query.c_str());
 	
 	//Create objects with received fields and add to storage's ObjectList
 	for (vector<vector<string>>::iterator it = result.begin(); it < result.end(); ++it)
 	{
 		vector<string> row = *it;
-
-		int dbuid = std::atoi(row.at(0).c_str());
-		
-		string dbname = row.at(1);
-		
-		struct tm tmadd;
-		char* addedtimestr = (char *)row.at(2).c_str();
-		std::strftime(addedtimestr, sizeof(addedtimestr), "%F %T", &tmadd);
-		time_t dbadd_date = mktime(&tmadd);  // t is now your desired time_t
-
-		struct tm tmrem;
-		char* addedtimestr = (char *)row.at(3).c_str();
-		std::strftime(addedtimestr, sizeof(addedtimestr), "%F %T", &tmrem);
-		time_t dbremove_date = mktime(&tmrem);  // t is now your desired time_t
-		
 		bool dbremoved = str_to_bool(row.at(5));
+		if (!dbremoved){
 
-		float dbposition_x = std::atof(row.at(5).c_str());
-		float dbposition_y = std::atof(row.at(6).c_str());
-		float dbposition_z = std::atof(row.at(7).c_str());
+			int dbuid = std::atoi(row.at(0).c_str());
 
-		float dbwidth = std::atof(row.at(8).c_str());
-		float dblenght = std::atof(row.at(9).c_str());
-		float dbheight = std::atof(row.at(10).c_str());
+			string dbname = row.at(1);
 
-		float dbroll = std::atof(row.at(11).c_str());
-		float dbpitch = std::atof(row.at(12).c_str());
-		float dbyaw = std::atof(row.at(13).c_str());
 
-		AddNewObject(*(new StoredObject(
-			dbuid, 
-			dbname, 
-			dbadd_date, 
-			dbremove_date, 
-			dbremoved, 
-			dbposition_x,
-			dbposition_y,
-			dbposition_z,
-			dbwidth,
-			dblenght,
-			dbheight,
-			dbroll, 
-			dbpitch, 
-			dbyaw)));
+
+
+
+			
+			//ostringstream timestring;
+			//timestring << row.at(2).c
+			//char* addedtimestr = (char*)row.at(2).c_str();
+			//std::strftime(addedtimestr, sizeof(addedtimestr), "%F %T", &tmadd);
+			struct tm * tmadd = new tm();
+			//struct tm tmadd = tm();
+			sscanf(row.at(2).c_str(), "%d-%d-%d %d:%d:%d ", &tmadd->tm_year, &tmadd->tm_mon, &tmadd->tm_mday, &tmadd->tm_hour, &tmadd->tm_min, &tmadd->tm_sec);
+			//sscanf(row.at(2).c_str(), "%d-%d-%d %d:%d:%d ", &tmadd.tm_year, &tmadd.tm_mon, &tmadd.tm_mday, &tmadd.tm_hour, &tmadd.tm_min, &tmadd.tm_sec);
+			//strptime("6 Dec 2001 12:33:45", "%d %b %Y %H:%M:%S", &tm);
+			
+			//tmadd.tm_isdst = -1;
+			tmadd->tm_year -= 1900;
+			tmadd->tm_isdst = -1;
+			
+			time_t dbadd_date = mktime(tmadd);
+			//time_t dbadd_date = timegm(&tmadd);
+			//time_t dbadd_date = mktime(&tmadd);
+
+
+
+
+
+
+
+			float dbposition_x = std::atof(row.at(3).c_str());
+			float dbposition_y = std::atof(row.at(4).c_str());
+			float dbposition_z = std::atof(row.at(5).c_str());
+
+			float dbwidth = std::atof(row.at(6).c_str());
+			float dblenght = std::atof(row.at(7).c_str());
+			float dbheight = std::atof(row.at(8).c_str());
+
+			float dbroll = std::atof(row.at(9).c_str());
+			float dbpitch = std::atof(row.at(10).c_str());
+			float dbyaw = std::atof(row.at(11).c_str());
+
+			AddObjectFromDatabase(*(new StoredObject(
+				dbuid,
+				dbname,
+				dbadd_date,
+				dbposition_x,
+				dbposition_y,
+				dbposition_z,
+				dbwidth,
+				dblenght,
+				dbheight,
+				dbroll,
+				dbpitch,
+				dbyaw)));
+		}
 	}
 	DataBase->close();
 }
 
-void Storage::saveStorageToDB(){
-	/*//For each object in current state of storage checking for existing infornation in database and update this.
+/*void Storage::saveStorageToDB(){
+	//For each object in current state of storage checking for existing infornation in database and update this.
 	DataBase = new SQLiteDatabase(dbName);
 	char* select_query = "SELECT * FROM object WHERE removed = 'FALSE';";
 
@@ -415,10 +502,10 @@ void Storage::saveStorageToDB(){
 
 	position(0) = dbposition_x;
 	position(1) = dbposition_y;
-	position(2) = dbposition_z;*/
-}
+	position(2) = dbposition_z;
+}*/
 
-vector<int> Storage::GetAllObjects(){
+/*vector<int> Storage::GetAllObjects(){
 
 }
 
@@ -436,4 +523,4 @@ vector<int> Storage::GetObjectsByPointXYZ(pcl::PointXYZ& testpoint){
 
 vector<int> Storage::GetObjectsAddedInTimeInterval(time_t starttime, time_t endtime){
 
-}
+}*/

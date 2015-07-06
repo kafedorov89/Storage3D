@@ -9,7 +9,7 @@ StorageLayer::StorageLayer(){ //Конструктор класса StorageLayer
 	layerPositiveDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
 	DepthMap = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
 
-	char* last_file_name = "last_layer.pcd";
+	last_file_name = "last_layer.pcd";
 
 	//objectForAddList = vector<StoredObject>();
 	//objectEraserList = vector<StoredObject>();
@@ -38,6 +38,7 @@ StorageLayer::StorageLayer(int layeruid, int storageuid){ //Конструктор класса S
 
 	//objectForAddList = vector<StoredObject>();
 	//objectEraserList = vector<StoredObject>();
+	last_file_name = "last_layer.pcd";
 	UID = layeruid;
 	storageUID = storageuid;
 }
@@ -63,14 +64,31 @@ void StorageLayer::SaveLayerToPCD(bool firstLayer, bool lastmodeon){
 			std::to_string(timeinfo->tm_mon) +
 			std::to_string(timeinfo->tm_year);
 
-		if (!firstLayer){
-			pcl::io::savePCDFileBinaryCompressed("delta_pos_cloud_" + timestring + ".pcd", *layerPositiveDelta);
-			pcl::io::savePCDFileBinaryCompressed("delta_neg_cloud_" + timestring + ".pcd", *layerNegativeDelta);
+		try{
+			if (!firstLayer){
+				pcl::io::savePCDFileBinaryCompressed("delta_pos_cloud_" + timestring + ".pcd", *layerPositiveDelta);
+				pcl::io::savePCDFileBinaryCompressed("delta_neg_cloud_" + timestring + ".pcd", *layerNegativeDelta);
+			}
+
+			pcl::io::savePCDFileBinaryCompressed("./database/layer_cloud_" + timestring + ".pcd", *DepthMap);
+		}
+		catch (std::exception& e){
+
+		}
+	}else{
+		try{
+			std::remove(last_file_name);
+		}
+		catch (std::exception& e){
+
 		}
 
-		pcl::io::savePCDFileBinaryCompressed("layer_cloud_" + timestring + ".pcd", *DepthMap);
-	}else{
-		std::remove(last_file_name);
-		pcl::io::savePCDFileBinaryCompressed(last_file_name, *DepthMap);
+		try{
+			pcl::io::savePCDFileBinaryCompressed(last_file_name, *DepthMap);
+		}
+		catch (std::exception& e){
+
+		}
+		
 	}
 }

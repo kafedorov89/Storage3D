@@ -20,7 +20,12 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	AddedDate = storedobject.AddedDate;
 	//RemovedDate = storedobject.RemovedDate;
 	isValid = storedobject.isValid;
+	//try{
 	object_cloud = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>(*storedobject.object_cloud));
+	//}
+	//catch (std::exception& e){
+
+	//}
 	step_degree = storedobject.step_degree;
 	max_degree = storedobject.max_degree;
 	objectDensity = storedobject.objectDensity;
@@ -95,9 +100,7 @@ StoredObject::StoredObject(
 StoredObject::StoredObject(
 	int dbuid, 
 	string dbname, 
-	time_t dbadd_date, 
-	time_t dbremove_date, 
-	bool dbremoved, 
+	time_t dbadd_date,
 	float dbposition_x, 
 	float dbposition_y, 
 	float dbposition_z, 
@@ -112,8 +115,7 @@ StoredObject::StoredObject(
 	ObjectName = dbname;
 
 	AddedDate = dbadd_date;
-	RemovedDate = dbremove_date;
-	removed = dbremoved;
+	removed = false;
 
 	width = dbwidth;
 	lenght = dblenght;
@@ -122,6 +124,8 @@ StoredObject::StoredObject(
 	roll = dbroll;
 	pitch = dbpitch;
 	yaw = dbyaw;
+
+	object_cloud = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>());
 
 	position(0) = dbposition_x;
 	position(1) = dbposition_y;

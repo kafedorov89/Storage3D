@@ -49,7 +49,10 @@
 
 #include <iostream>
 #include <time.h>
+
 #include "sqlite/SQLiteDatabase.h"
+//#include <ctime>
+//#include <time.h>
 
 using namespace std;
 
@@ -92,18 +95,19 @@ public:
 	~Storage();
 
 	void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep); //Функция вычисления Delta в реальных координатах для добавленного слоя
-	void AddNewObject(StoredObject& newObject); //Функция добавления нового объекта
+	void AddObjectFromDatabase(StoredObject& newobject);
+	void AddNewObject(StoredObject& newobject); //Функция добавления нового объекта
 	void RemoveObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция удаления всех найденных объектов
 	void RemoveObject(int objectID); //Функция удаления i-го объекта со склада 
 	void FindObjects(int LayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция поиска объектов, добавленных на новом слое
 	void AddNewLayer(StorageLayer& newLayer); //Функция добавления нового слоя
 	
 	void initStorageFromDB();
-	void saveStorageToDB();
 
-	vector<int> GetAllObjects();
+	//void saveStorageToDB();
+	/*vector<int> GetAllObjects();
 	vector<int> GetActualObjects();
 	vector<int> GetRemovedObjects();
 	vector<int> GetObjectsByPointXYZ(pcl::PointXYZ& testpoint);
-	vector<int> GetObjectsAddedInTimeInterval(time_t starttime, time_t endtime);
+	vector<int> GetObjectsAddedInTimeInterval(time_t starttime, time_t endtime);*/
 };
