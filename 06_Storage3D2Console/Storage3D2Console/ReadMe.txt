@@ -2,6 +2,14 @@
     CONSOLE APPLICATION : Storage3D2Console Project Overview
 ========================================================================
 
+For using this project you should using Visual Studio 2013
+
+Additional library:
+1. "PCL-1.7.2-AllInOne-msvc2013-win32" for doing manipulations with point clouds
+2. "dirent" for watch dir in windows from code
+3. "sqlite3" for store data about 3D-storage
+
+
 AppWizard has created this Storage3D2Console application for you.
 
 This file contains a summary of what you will find in each of the files that
