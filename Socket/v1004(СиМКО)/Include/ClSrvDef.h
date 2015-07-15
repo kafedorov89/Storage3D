@@ -1,0 +1,6 @@
+#ifndef _CLSRVDEF_H_
+#define _CLSRVDEF_H_
+
+#define CLSRVDEF_COMMUNICATION_DATA_SIZE  (3*1048576)
+
+#endif

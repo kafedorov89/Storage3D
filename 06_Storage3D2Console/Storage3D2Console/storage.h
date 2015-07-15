@@ -86,6 +86,7 @@ public:
 
 	//----------------------------------------------------------------------------------------------
 	//Методы склада
+
 	Storage(int uid,
 		float deltalimit,
 		bool enablevoxelfiltration,
@@ -94,14 +95,28 @@ public:
 		char* dbname);
 	~Storage();
 
-	void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep); //Функция вычисления Delta в реальных координатах для добавленного слоя
-	void AddObjectFromDatabase(StoredObject& newobject);
-	void AddNewObject(StoredObject& newobject); //Функция добавления нового объекта
-	void RemoveObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция удаления всех найденных объектов
-	void RemoveObject(int objectID); //Функция удаления i-го объекта со склада 
-	void FindObjects(int LayerUID, float valid_percent, int nearestpoinscount, float object_density); //Функция поиска объектов, добавленных на новом слое
-	void AddNewLayer(StorageLayer& newLayer); //Функция добавления нового слоя
+	//Функция вычисления Delta в реальных координатах для добавленного слоя
+	void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep); 
 	
+	//Функция добавления i-го объекта из базы данных
+	void AddObjectFromDatabase(StoredObject& newobject);
+	
+	//Функция добавления нового объекта
+	void AddNewObject(StoredObject& newobject); 
+	
+	//Функция удаления всех найденных объектов
+	void RemoveObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float object_density); 
+	
+	//Функция удаления i-го объекта со склада 
+	void RemoveObject(int objectID); 
+	
+	//Функция поиска объектов, добавленных на новом слое
+	void FindObjects(int LayerUID, float valid_percent, int nearestpoinscount, float object_density); 
+	
+	//Функция добавления нового слоя
+	void AddNewLayer(StorageLayer& newLayer); 
+	
+	//Функция инициализации склада из базы данных
 	void initStorageFromDB();
 
 	//void saveStorageToDB();

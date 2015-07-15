@@ -90,7 +90,6 @@ StoredObject::StoredObject(
 
 	ObjectName = objectname;
 	
-
 	//find_bbox();
 	//check_valid_object();
 	//check_isinside_point(pcl::PointXYZ(0, 0, 0));
@@ -164,6 +163,7 @@ void StoredObject::check_2d_valid_object(float limit_array[6], float valid_perce
 }
 
 bool StoredObject::check_isinside_point(const pcl::PointXYZ &check_point){
+	
 	//Eigen::Affine3f* transform_rotate = new Eigen::Affine3f(pcl::getTransformation(-position(0), -position(1), -position(2), 0, 0, 0));
 	pcl::PointXYZ* point_in_zero = new pcl::PointXYZ(pcl::transformPoint(check_point, *jump_to_zero));
 	//pcl::PointXYZ* point_in_zero = new pcl::PointXYZ(pcl::transformPoint(check_point, *transform_rotate));
@@ -266,6 +266,9 @@ void StoredObject::find_bbox(){
 	}
 
 	position = Eigen::Vector3f(mass_center(0), mass_center(1), mass_center(2));
+
+	//FIXME. Add calculation for 4 upVertexe
+
 	CalcJamp();
 	
 	delete boundingBox;

@@ -88,13 +88,14 @@ public:
 	//Параметры связи объекта с другими сущностями склада
 	int UID; //Уникальный числовой идентификатор объекта
 	int storageUID; //Уникальный идентификатор склада на который добавлен объект
+	
 	int addedLayerID; //Идентификатор слоя на котором был добавлен объект
 	int removedLayerID; //идентификатор слоя на котором объект был удален
 
 	//Собственные идентификаторы объекта
 	string ObjectName; //Не уникальное буквенное обозначение объекта
 	string ObjectTypeName; //Название типа объекта 
-	int ObjectType; //Идентификатор типа объекта
+	int ObjectType; //Идентификатор типа объекта (-1 - Undefined; 0 - Parallelogramm; 1 - Cylinder)
 	time_t AddedDate; //Время добавления объекта на склад
 	time_t RemovedDate; //Время удаления объекта со склада
 
@@ -110,13 +111,13 @@ public:
 	float objectDensity; //Count of point cloud grid in x, y, z dimentions
 
 	//Moving to position
-	Eigen::Vector3f position;
+	Eigen::Vector3f position; //Center of object
+	
 	Eigen::Quaternionf quaternion_to_bbox;
 	Eigen::Quaternionf quaternion_to_zero;
 
-	Eigen::Affine3f* jump_to_bbox;
-	//Moving to zero
-	Eigen::Affine3f* jump_to_zero;
+	Eigen::Affine3f* jump_to_bbox; //Moving to object's position
+	Eigen::Affine3f* jump_to_zero;//Moving to zero
 
 	//Object orientation to set to zero position
 	float roll;
@@ -127,16 +128,29 @@ public:
 	float width;
 	float lenght;
 	float height;
+	Eigen::Vector3f upVertex1; //Up cover vertex 1 
+	Eigen::Vector3f upVertex2; //Up cover vertex 2
+	Eigen::Vector3f upVertex3; //Up cover vertex 3
+	Eigen::Vector3f upVertex4; //Up cover vertex 4
+	
 	bool isGroup;
+	bool isHorizontalGroup;
+	bool isVerticalGroup;
+	//Approximate parameters of objects count
+	int minPossibleObjCount; //Minimum possible count 
+	int maxPossibleObjCount; //Maximum possible count
 
 	float square;
 
 	//-----------------------------------------------------------------------------------------------
 	//Методы хранимого объекта
+	//Конструктор по умолчанию класса Stored3Dobject
 	StoredObject();
 	
+	//Конструктор копирования класса Stored3Dobject
 	StoredObject(const StoredObject& storedobject);
 	
+	//Конструктор класса Stored3Dobject
 	StoredObject(
 		int layerid, 
 		int storageid, 
@@ -145,8 +159,9 @@ public:
 		int stepdegree, 
 		int maxdegree, 
 		float objectdensity,
-		string objectname = ""); //Конструктор класса Stored3Dobject
+		string objectname = "");
 	
+	//Constructor for init object Stored3Dobject from database
 	StoredObject(
 		int dbuid,
 		string dbname,
@@ -163,10 +178,18 @@ public:
 
 	~StoredObject();
 
+	//Функция проверки плотности точек на верхней поверхности объекта (по умолчанию задан порог >= 70% от площади прямоугольника)
 	void check_2d_valid_object(float limit_array[6], float valid_percent);
-	//void check_3d_valid_object(float limit_array[6]);
+
+	//Функция проверки положения точки (внутри или снажи параллелограмма описывающего объект)
 	bool check_isinside_point(const pcl::PointXYZ &check_point);
-	void find_bbox(); //Finding BoundingBox
+	
+	//Функция поиска 
+	void find_bbox();
+	
+	//Функция удаления объекта (отметки о том что объект не является актуальным)
 	void Remove();
+
+	//Функця вычисления кватерниона перемещения объекта в нулевое положение с нулевой ориентацией и обратно на свое место
 	void CalcJamp();
 };

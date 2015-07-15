@@ -109,7 +109,7 @@ void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoi
 			test_remover->find_bbox();
 
 			//Check length and width of 2d_object
-			test_remover->check_2d_valid_object(ObjectLimitSize, valid_percent);
+			test_remover->check_2d_valid_object(ObjectLimitSize, valid_percent); //FIXME. 
 
 			if (test_remover->isValid){
 				//Check height in position (center) point
@@ -126,13 +126,11 @@ void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoi
 				testPoint->y = test_remover->position(1);
 				testPoint->z = test_remover->position(2) + 0.5 * test_remover->height; //Plus (+) because oZ axis is up side down
 
-				float center_height = -GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10); //Minus (-) because oZ axis is up side down
-				std::cout << "Remover's approximate height = " << center_height << std::endl;
+				float object_height = -GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10); //Minus (-) because oZ axis is up side down
+				std::cout << "Remover's approximate height = " << object_height << std::endl;
 				
-				test_remover->position(2) = testPoint->z - 0.5f * center_height; //Minus (-) because oZ axis is up side down
-				
-				test_remover->height = center_height;
-
+				test_remover->position(2) = testPoint->z - 0.5f * object_height; //Minus (-) because oZ axis is up side down
+				test_remover->height = object_height;
 				test_remover->CalcJamp();
 
 				LayerList[curLayerUID]->removerList.push_back(test_remover);
@@ -144,12 +142,33 @@ void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoi
 		{
 			std::cout << LayerList[curLayerUID]->removerList.size() << " removers was found." << std::endl;
 			std::cout << "Removing objects..." << std::endl;
-			//Add founded objects
+			//Removing objects
+			//For each founded Remover
 			for (int i = 0; i < LayerList[curLayerUID]->removerList.size(); i++){
+				//Check all objects
 				for (int k = 0; k < ObjectList.size(); k++){
 					if (LayerList[curLayerUID]->removerList[i]->check_isinside_point(pcl::PointXYZ(ObjectList[k]->position(0), ObjectList[k]->position(1), ObjectList[k]->position(2)))){
+						
+						
+						
 						RemoveObject(k);
 						std::cout << i + 1 << " object was removed" << std::endl;
+					}
+
+					//FIXME. Добавить проверку нахождения центра Remover'а внутри k-го объекта 
+					else if (ObjectList[k]->isGroup){
+						if (ObjectList[k]->check_isinside_point(pcl::PointXYZ(LayerList[curLayerUID]->removerList[i]->position(0), LayerList[curLayerUID]->removerList[i]->position(1), LayerList[curLayerUID]->removerList[i]->position(2)))){
+
+							//FIXME. Добавить функцию разделения облака точек группы по границе объекта Remover (Оставляем то что осталось снаружи объекта Remover)
+							
+							//FIXME. Добавить вызов функции Storage::FindObjects(int curLayerUID (UID слоя, на котором был добавлен объект), float valid_percent, int nearestpoinscount, float objectdensity)
+							//Для облака точек оставшегося в группе. Поиск объектов в группе необходимо производить по параметрам удаляемого объекта (Предполагая что все объекты в группе были одинаковыми)
+
+
+							RemoveObject(k);
+							std::cout << i + 1 << " object was removed" << std::endl;
+
+						}
 					}
 				}
 			}
@@ -163,7 +182,7 @@ void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoi
 	}
 }
 
-void Storage::RemoveObject(int objectID){ //Функция удаления i-го объекта со склада 
+void Storage::RemoveObject(int objectID){ 
 	string select_query, update_query;
 	ostringstream querystring;
 	ostringstream querystring2;
@@ -234,6 +253,7 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 			test_object->find_bbox();
 
 			//Check length and width of 2d_object
+			//FIXME. Add to check_2d_valid_object() function or to Anoter function find_object_type(){ } object type recognition (Parallelogram, Cylinder)
 			test_object->check_2d_valid_object(ObjectLimitSize, valid_percent);
 
 			if (test_object->isValid){
@@ -244,32 +264,59 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 				pcl::KdTreeFLANN<pcl::PointXY> kdtree;
 				kdtree.setInputCloud(oldcloud2d);
 
-				pcl::PointXYZ *testPoint = new pcl::PointXYZ();
+				pcl::PointXYZ *testPointCenter = new pcl::PointXYZ();
+				pcl::PointXYZ *testPoint1 = new pcl::PointXYZ();
+				pcl::PointXYZ *testPoint2 = new pcl::PointXYZ();
+				pcl::PointXYZ *testPoint3 = new pcl::PointXYZ();
+				pcl::PointXYZ *testPoint4 = new pcl::PointXYZ();
+
 
 				//Getting test point with max Z coordinate
-				testPoint->x = test_object->position(0);
-				testPoint->y = test_object->position(1);
-				testPoint->z = test_object->position(2) - 0.5f * test_object->height; //Minus (-) because oZ axis is up side down
+				testPointCenter->x = test_object->position(0);
+				testPointCenter->y = test_object->position(1);
+				testPointCenter->z = test_object->position(2) - 0.5f * test_object->height; //Minus (-) because oZ axis is up side down
 
-				//LayerList[curLayerUID]->objectForAddList.push_back(test_object); //DEBUG
+				testPoint1->x = test_object->upVertex1(0);
+				testPoint1->y = test_object->upVertex1(1);
+				testPoint1->z = test_object->upVertex1(2);
 
-				//int oldpointindex;
+				testPoint2->x = test_object->upVertex2(0);
+				testPoint2->y = test_object->upVertex2(1);
+				testPoint2->z = test_object->upVertex2(2);
 
-				//float center_height = GetPointDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, oldpointindex);
-				float center_height = GetNPointsDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
-				std::cout << "Object's approximate height = " << center_height << std::endl;
+				testPoint3->x = test_object->upVertex3(0);
+				testPoint3->y = test_object->upVertex3(1);
+				testPoint3->z = test_object->upVertex3(2);
+
+				testPoint4->x = test_object->upVertex4(0);
+				testPoint4->y = test_object->upVertex4(1);
+				testPoint4->z = test_object->upVertex4(2);
+
+
+				//FIXME. Add calculation height in 4 points from vertex of up cover rectangle
+				//float object_height = GetPointDelatZ(*testPoint, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, oldpointindex);
+				float height0 = GetNPointsDelatZ(*testPointCenter, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
+				float height1 = GetNPointsDelatZ(*testPoint1, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
+				float height2 = GetNPointsDelatZ(*testPoint2, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
+				float height3 = GetNPointsDelatZ(*testPoint3, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
+				float height4 = GetNPointsDelatZ(*testPoint4, oldcloud2d, LayerList[curLayerUID - 1]->DepthMap, kdtree, 10);
+				//FIXME. Add finding minimum of 5 gotten heihgt values 
+				float object_height = std::min(height0, height1, height2, height3, height4);
+				
+				std::cout << "Object's approximate height = " << object_height << std::endl;
 
 				//Less than one object 
-				if (center_height < ObjectLimitSize[2]){
+				if (object_height < ObjectLimitSize[2]){
 					test_object->isValid = false;
 					//Find several or one object
 				}
+				
 				//About one object
-				else if (center_height > ObjectLimitSize[2] && center_height < ObjectLimitSize[5]){
+				else if (object_height > ObjectLimitSize[2] && object_height < ObjectLimitSize[5]){
 					test_object->isValid = true;
 					test_object->UID = (int)rawtime;
-					test_object->position(2) = testPoint->z + 0.5f * center_height; //Plus (+) because oZ axis is up side down
-					test_object->height = center_height;
+					test_object->position(2) = testPointCenter->z + 0.5f * object_height; //Plus (+) because oZ axis is up side down
+					test_object->height = object_height;
 
 					//Manual settings object's name
 					std::cout << "Enter object name: ";
@@ -280,8 +327,9 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 
 					LayerList[curLayerUID]->objectForAddList.push_back(test_object);
 				}
+				
 				//Several objects
-				else if (center_height > ObjectLimitSize[5])
+				else if (object_height > ObjectLimitSize[5])
 				{
 					//Manual settings obj_count or obj_height 
 					std::cout << "Several objects was found. Set count: ";
@@ -290,11 +338,11 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 					std::cin >> obj_count;
 
 					test_object->isGroup = true;
-					//int obj_count = (float)center_height / (float)ObjectLimitSize[2]; //FIXME. Возможна набегающая погрешность при большом количестве объектов и одновременно большом диапозоне между maxz = ObjectLimitSize[5] и minz = ObjectLimitSize[2]
-					float zero_level = testPoint->z + center_height; //Plus (+) because oZ axis is up side down
+					//int obj_count = (float)object_height / (float)ObjectLimitSize[2]; //FIXME. Возможна набегающая погрешность при большом количестве объектов и одновременно большом диапозоне между maxz = ObjectLimitSize[5] и minz = ObjectLimitSize[2]
+					float zero_level = testPointCenter->z + object_height; //Plus (+) because oZ axis is up side down
 
 					if (obj_count > 1){
-						obj_height = center_height / obj_count;
+						obj_height = object_height / obj_count;
 					}
 					else if (obj_count == 1){
 						obj_height = (ObjectLimitSize[2] + ObjectLimitSize[5]) / 2.0f;
@@ -314,6 +362,8 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 
 
 						k_object->height = obj_height;
+
+						//FIXME. Добавить отсчет объектов с верхней границы. Подход решит проблему с объектами уложенными "буквой П"
 						k_object->position(2) = zero_level - obj_height * 0.5 - k * obj_height; //Minus (-) because oZ axis is up side down
 
 						k_object->CalcJamp();
@@ -323,6 +373,7 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 				}
 			}
 
+			//Adding founded objects
 			if (LayerList[curLayerUID]->objectForAddList.size() > 0)
 			{
 				std::cout << LayerList[curLayerUID]->objectForAddList.size() << " new objects was found." << std::endl;
