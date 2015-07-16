@@ -48,6 +48,9 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	quaternion_to_zero = storedobject.quaternion_to_zero;
 	jump_to_bbox = storedobject.jump_to_bbox;
 	jump_to_zero = storedobject.jump_to_zero;
+	
+	isHorizontalGroup = storedobject.isHorizontalGroup;
+	isVerticalGroup = storedobject.isVerticalGroup;
 }
 
 StoredObject::StoredObject(
@@ -74,6 +77,9 @@ StoredObject::StoredObject(
 	height = FLT_MAX;
 
 	isGroup = false;
+	isHorizontalGroup = false;
+	isVerticalGroup = false;
+
 	square = FLT_MAX;
 
 	step_degree = stepdegree;
@@ -108,10 +114,12 @@ StoredObject::StoredObject(
 	float dbheight, 
 	float dbroll, 
 	float dbpitch, 
-	float dbyaw)
+	float dbyaw,
+	int dbobjtype)
 {
 	UID = dbuid;
 	ObjectName = dbname;
+	ObjectType = dbobjtype;
 
 	AddedDate = dbadd_date;
 	removed = false;
@@ -139,7 +147,9 @@ StoredObject::~StoredObject()
 {
 }
 
-void StoredObject::check_2d_valid_object(float limit_array[6], float valid_percent){
+void StoredObject::find_valid_object_type(float limit_array[6], float valid_percent){
+	
+	//FIXME. Should work with "object_cloud"
 	
 	std::cout << " width = " << width << std::endl;
 	std::cout << " lenght = " << lenght << std::endl;

@@ -95,7 +95,7 @@ public:
 	//Собственные идентификаторы объекта
 	string ObjectName; //Не уникальное буквенное обозначение объекта
 	string ObjectTypeName; //Название типа объекта 
-	int ObjectType; //Идентификатор типа объекта (-1 - Undefined; 0 - Parallelogramm; 1 - Cylinder)
+	int ObjectType; //Идентификатор типа объекта (-1 - Undefined; 0 - Parallelogramm; 1 - VerticalCylinder; 2 - HorizontalCylinder)
 	time_t AddedDate; //Время добавления объекта на склад
 	time_t RemovedDate; //Время удаления объекта со склада
 
@@ -174,12 +174,13 @@ public:
 		float dbheight,
 		float dbroll,
 		float dbpitch,
-		float dbyaw);
+		float dbyaw,
+		int dbobjtype);
 
 	~StoredObject();
 
 	//Функция проверки плотности точек на верхней поверхности объекта (по умолчанию задан порог >= 70% от площади прямоугольника)
-	void check_2d_valid_object(float limit_array[6], float valid_percent);
+	void find_valid_object_type(float limit_array[6], float valid_percent);
 
 	//Функция проверки положения точки (внутри или снажи параллелограмма описывающего объект)
 	bool check_isinside_point(const pcl::PointXYZ &check_point);
