@@ -39,7 +39,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	std::cerr << "PointCloud has: " << cloud->points.size() << " data points." << std::endl;
 
 	// Apply foxel filtration
-	float voxeldensity = 0.01;
+	float voxeldensity = 0.02;
 	
 	pcl::VoxelGrid<pcl::PointXYZ> vg;
 	vg.setInputCloud(cloud);
@@ -64,16 +64,16 @@ int _tmain(int argc, _TCHAR* argv[])
 	// Estimate point normals
 	ne.setSearchMethod(tree);
 	ne.setInputCloud(cloud_filtered);
-	ne.setKSearch(50);
+	ne.setKSearch(10);
 	ne.compute(*cloud_normals);
 
 	
 	//Cycle for find planes
 
-	int min_plane_size = 500;
-	float planeNormalDistanceWeight = 0.05;
-	int planeMaxIterations = 100;
-	float planeDistanceThreshold = 0.02;
+	int min_plane_size = 250;
+	float planeNormalDistanceWeight = 0.1;
+	int planeMaxIterations = 1000;
+	float planeDistanceThreshold = voxeldensity * 2;
 
 	int k = 0;
 	while (true){
@@ -151,12 +151,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	//Cycle for find cylinders
 
-	float cylinderNormalDistanceWeight = 0.05;
-	int cylinderMaxIterations = 100;
-	float DistanceThreshold = 0.01;
+	float cylinderNormalDistanceWeight = 0.1;
+	int cylinderMaxIterations = 1000;
+	float DistanceThreshold = voxeldensity * 2;
 	float cylinderMinRadius = 0.01;
-	float cylinderMaxRadius = 0.3;
-	int min_cylinder_size = 200;
+	float cylinderMaxRadius = 0.2;
+	int min_cylinder_size = 100;
 	
 	int i = 0;
 	while (true){

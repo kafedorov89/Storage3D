@@ -1,0 +1,23 @@
+﻿Cylinder in clowd was found
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch step2cylinders
+# Your branch is up-to-date with 'origin/step2cylinders'.
+#
+# Changes to be committed:
+#	modified:   CylinderRecognition/CylinderRecognition/CylinderRecognition.cpp
+#	new file:   CylinderRecognition/CylinderRecognition/cylinder_0.pcd
+#	deleted:    CylinderRecognition/CylinderRecognition/filtered.pcd
+#	modified:   CylinderRecognition/CylinderRecognition/filtered2.pcd
+#	new file:   CylinderRecognition/CylinderRecognition/plane_0.pcd
+#	new file:   CylinderRecognition/CylinderRecognition/plane_1.pcd
+#	new file:   CylinderRecognition/CylinderRecognition/plane_2.pcd
+#	new file:   CylinderRecognition/CylinderRecognition/plane_3.pcd
+#	new file:   CylinderRecognition/CylinderRecognition/plane_4.pcd
+#	new file:   CylinderRecognition/CylinderRecognition/plane_5.pcd
+#	new file:   CylinderRecognition/CylinderRecognition/plane_6.pcd
+#	new file:   CylinderRecognition/CylinderRecognition/plane_7.pcd
+#	new file:   CylinderRecognition/CylinderRecognition/plane_8.pcd
+#	deleted:    CylinderRecognition/CylinderRecognition/voxeled.pcd
+#
+
