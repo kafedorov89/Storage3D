@@ -33,20 +33,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	pcl::PointCloud<PointT>::Ptr cloud_filtered(new pcl::PointCloud<PointT>);
 	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
-	
-	pcl::PointCloud<PointT>::Ptr cloud_filtered2(new pcl::PointCloud<PointT>);
-	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals2(new pcl::PointCloud<pcl::Normal>);
-	
-	pcl::ModelCoefficients::Ptr coefficients_plane(new pcl::ModelCoefficients);
-	pcl::PointIndices::Ptr inliers_plane(new pcl::PointIndices);
-	
 
 	// Read in the cloud data
 	reader.read("PointCloud.pcd", *cloud);
 	std::cerr << "PointCloud has: " << cloud->points.size() << " data points." << std::endl;
 
 	// Apply foxel filtration
-	float voxeldensity = 0.03;
+	float voxeldensity = 0.01;
+	
 	pcl::VoxelGrid<pcl::PointXYZ> vg;
 	vg.setInputCloud(cloud);
 	vg.setLeafSize(voxeldensity, voxeldensity, voxeldensity); //FIXME. Need to create function with flexeble values for leaf cloud size (Cloud, Count point per dimentions -> BoundingBox -> dimentions -> setLeafSize -> LightCloud)
@@ -56,9 +50,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	writer.write("voxeled.pcd", *cloud, false);
 
 	// Build a passthrough filter to remove spurious NaNs
+	float minZ = 0;
+	float maxZ = 5;
+	
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("z");
-	pass.setFilterLimits(0, 5);
+	pass.setFilterLimits(minZ, maxZ);
 	pass.filter(*cloud_filtered);
 	std::cerr << "PointCloud after filtering has: " << cloud_filtered->points.size() << " data points." << std::endl;
 
@@ -70,45 +67,103 @@ int _tmain(int argc, _TCHAR* argv[])
 	ne.setKSearch(50);
 	ne.compute(*cloud_normals);
 
-	// Create the segmentation object for the planar model and set all the parameters
-	seg.setOptimizeCoefficients(true);
-	seg.setModelType(pcl::SACMODEL_NORMAL_PLANE);
-	seg.setNormalDistanceWeight(0.1);
-	seg.setMethodType(pcl::SAC_RANSAC);
-	seg.setMaxIterations(100);
-	seg.setDistanceThreshold(0.05);
-	seg.setInputCloud(cloud_filtered);
-	seg.setInputNormals(cloud_normals);
-	// Obtain the plane inliers and coefficients
-	seg.segment(*inliers_plane, *coefficients_plane);
-	std::cerr << "Plane coefficients: " << *coefficients_plane << std::endl;
+	
+	//Cycle for find planes
 
-	// Extract the planar inliers from the input cloud
-	extract.setInputCloud(cloud_filtered);
-	extract.setIndices(inliers_plane);
-	extract.setNegative(false);
+	int min_plane_size = 500;
+	float planeNormalDistanceWeight = 0.05;
+	int planeMaxIterations = 100;
+	float planeDistanceThreshold = 0.02;
 
-	// Write the planar inliers to disk
-	pcl::PointCloud<PointT>::Ptr cloud_plane(new pcl::PointCloud<PointT>());
-	extract.filter(*cloud_plane);
-	std::cerr << "PointCloud representing the planar component: " << cloud_plane->points.size() << " data points." << std::endl;
-	writer.write("plane.pcd", *cloud_plane, false);
+	int k = 0;
+	while (true){
+		pcl::PointCloud<PointT>::Ptr cloud_filtered_k(new pcl::PointCloud<PointT>);
+		pcl::PointCloud<pcl::Normal>::Ptr cloud_normals_k(new pcl::PointCloud<pcl::Normal>);
+	
+		pcl::PointCloud<PointT>::Ptr cloud_k_plane(new pcl::PointCloud<PointT>());
+		pcl::ModelCoefficients::Ptr coefficients_k_plane(new pcl::ModelCoefficients);
+		pcl::PointIndices::Ptr inliers_k_plane(new pcl::PointIndices);
 
-	// Remove the planar inliers, extract the rest
-	extract.setNegative(true);
-	extract.filter(*cloud_filtered2);
-	extract_normals.setNegative(true);
-	extract_normals.setInputCloud(cloud_normals);
-	extract_normals.setIndices(inliers_plane);
-	extract_normals.filter(*cloud_normals2);
+		// Create the segmentation object for the planar model and set all the parameters
+		seg.setOptimizeCoefficients(true);
+		seg.setModelType(pcl::SACMODEL_NORMAL_PLANE);
+		seg.setMethodType(pcl::SAC_RANSAC);
 
-	writer.write("filtered2.pcd", *cloud_filtered2, false);
+		seg.setNormalDistanceWeight(planeNormalDistanceWeight);
+		seg.setMaxIterations(planeMaxIterations);
+		seg.setDistanceThreshold(planeDistanceThreshold);
 
+		seg.setInputCloud(cloud_filtered);
+		seg.setInputNormals(cloud_normals);
+
+		/*seg.setInputNormals(cloud_normals);
+		seg.setInputCloud(cloud_filtered);
+		seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
+		seg.setMethodType(pcl::SAC_RANSAC);
+		seg.setMaxIterations(1000);
+		seg.setDistanceThreshold(0.01);
+		seg.setAxis(Eigen::Vector3f(0, 0, 1));
+		seg.setEpsAngle(0.02);*/
+
+		// Obtain the plane inliers and coefficients
+		seg.segment(*inliers_k_plane, *coefficients_k_plane);
+		//std::cerr << "Plane coefficients: " << *coefficients_plane << std::endl;
+
+		// Extract the planar inliers from the input cloud
+		extract.setInputCloud(cloud_filtered);
+		extract.setIndices(inliers_k_plane);
+		extract.setNegative(false);
+		extract.filter(*cloud_k_plane);
+
+		if (cloud_k_plane->points.empty() || cloud_k_plane->points.size() < min_plane_size){
+			std::cout << "Can't find the plane component. Cycle will stop." << std::endl;
+			
+			writer.write("filtered2.pcd", *cloud_filtered, false);
+
+			break;
+		}
+		else{
+			// Write the planar inliers to disk
+			std::cerr << "In point cloud was found plane: " << k << std::endl << "Points count: " << cloud_k_plane->points.size() << std::endl;
+
+			//Write k-plane to disk
+			std::stringstream ss;
+			ss << "plane_" << k << ".pcd";
+			writer.write(ss.str(), *cloud_k_plane, false);
+		}
+		//writer.write("plane.pcd", *cloud_k_plane, false);
+
+		// Remove the planar inliers, extract the rest
+		extract.setNegative(true);
+		extract.filter(*cloud_filtered_k);
+		extract_normals.setNegative(true);
+		extract_normals.setInputCloud(cloud_normals);
+		extract_normals.setIndices(inliers_k_plane);
+		extract_normals.filter(*cloud_normals_k);
+
+		cloud_filtered.swap(cloud_filtered_k);
+		cloud_normals.swap(cloud_normals_k);
+
+		//writer.write("filtered2.pcd", *cloud_filtered2, false);
+		k++;
+	}
+
+	
+	//Cycle for find cylinders
+
+	float cylinderNormalDistanceWeight = 0.05;
+	int cylinderMaxIterations = 100;
+	float DistanceThreshold = 0.01;
+	float cylinderMinRadius = 0.01;
+	float cylinderMaxRadius = 0.3;
+	int min_cylinder_size = 200;
+	
 	int i = 0;
 	while (true){
 		pcl::PointCloud<PointT>::Ptr cloud_i_cylinder(new pcl::PointCloud<PointT>());
 		pcl::ModelCoefficients::Ptr coefficients_i_cylinder(new pcl::ModelCoefficients);
 		pcl::PointIndices::Ptr inliers_i_cylinder(new pcl::PointIndices);
+		
 		pcl::PointCloud<PointT>::Ptr cloud_filtered_i(new pcl::PointCloud<PointT>);
 		pcl::PointCloud<pcl::Normal>::Ptr cloud_normals_i(new pcl::PointCloud<pcl::Normal>);
 		
@@ -116,18 +171,18 @@ int _tmain(int argc, _TCHAR* argv[])
 		seg.setOptimizeCoefficients(true);
 		seg.setModelType(pcl::SACMODEL_CYLINDER);
 		seg.setMethodType(pcl::SAC_RANSAC);
-		seg.setNormalDistanceWeight(0.1);
-		seg.setMaxIterations(10000);
-		seg.setDistanceThreshold(0.05);
-		seg.setRadiusLimits(0.1, 0.4);
-		seg.setInputCloud(cloud_filtered2);
-		seg.setInputNormals(cloud_normals2);
+		seg.setNormalDistanceWeight(cylinderNormalDistanceWeight);
+		seg.setMaxIterations(cylinderMaxIterations);
+		seg.setDistanceThreshold(DistanceThreshold);
+		seg.setRadiusLimits(cylinderMinRadius, cylinderMaxRadius);
+		seg.setInputCloud(cloud_filtered);
+		seg.setInputNormals(cloud_normals);
 
 		// Obtain the cylinder inliers and coefficients
 		seg.segment(*inliers_i_cylinder, *coefficients_i_cylinder);
 		//std::cerr << "Cylinder coefficients: " << *coefficients_icylinder << std::endl;
 
-		extract.setInputCloud(cloud_filtered2);
+		extract.setInputCloud(cloud_filtered);
 		extract.setIndices(inliers_i_cylinder);
 		extract.setNegative(false);
 		extract.filter(*cloud_i_cylinder);
@@ -138,14 +193,15 @@ int _tmain(int argc, _TCHAR* argv[])
 		
 		// Remove i-cylinder point from normal's point cloud
 		extract_normals.setNegative(true);
-		extract_normals.setInputCloud(cloud_normals2);
+		extract_normals.setInputCloud(cloud_normals);
 		extract_normals.setIndices(inliers_i_cylinder);
+
 		extract_normals.filter(*cloud_normals_i);
 
-		cloud_filtered2.swap(cloud_filtered_i);
-		cloud_normals2.swap(cloud_normals_i);
+		cloud_filtered.swap(cloud_filtered_i);
+		cloud_normals.swap(cloud_normals_i);
 
-		if (cloud_i_cylinder->points.empty()){
+		if (cloud_i_cylinder->points.empty() || cloud_i_cylinder->points.size() < min_cylinder_size){
 			std::cout << "Can't find the cylindrical component. Cycle will stop." << std::endl;
 			break;
 		}
@@ -155,7 +211,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			//Write i-cylinder to disk
 			std::stringstream ss;
-			ss << "cylinder" << i << ".pcd";
+			ss << "cylinder_" << i << ".pcd";
 			writer.write(ss.str(), *cloud_i_cylinder, false);
 		}
 		i++;
