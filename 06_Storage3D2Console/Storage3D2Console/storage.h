@@ -75,6 +75,9 @@ public:
 	bool enableNoizeFiltration;
 	bool enableVoxelFiltration;
 	char* dbName;
+	char* dbFolder;
+	char* layersFolder;
+	char* objectsFolder;
 
 	float PlaneClasterTollerance;
 	int MinPlaneClasterSize;
@@ -87,12 +90,7 @@ public:
 	//----------------------------------------------------------------------------------------------
 	//Методы склада
 
-	Storage(int uid,
-		float deltalimit,
-		bool enablevoxelfiltration,
-		bool enableplanefiltration,
-		bool enablenoizefiltration,
-		char* dbname);
+	Storage(int uid, char* dbname, char* dbfolder, char* layersfolder, char* objectsfolder);
 	~Storage();
 
 	//Функция вычисления Delta в реальных координатах для добавленного слоя
@@ -119,7 +117,6 @@ public:
 	//Функция инициализации склада из базы данных
 	void initStorageFromDB();
 
-	//void saveStorageToDB();
 	/*vector<int> GetAllObjects();
 	vector<int> GetActualObjects();
 	vector<int> GetRemovedObjects();

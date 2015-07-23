@@ -93,7 +93,9 @@ public:
 	int removedLayerID; //идентификатор слоя на котором объект был удален
 
 	//Собственные идентификаторы объекта
-	string ObjectName; //Не уникальное буквенное обозначение объекта
+	string Name; //Не уникальное буквенное обозначение объекта
+	string fileName; //Имя файла в котором хранится облако точек объекта
+
 	string ObjectTypeName; //Название типа объекта 
 	int ObjectType; //Идентификатор типа объекта (-1 - Undefined; 0 - Parallelogramm; 1 - VerticalCylinder; 2 - HorizontalCylinder)
 	time_t AddedDate; //Время добавления объекта на склад
@@ -103,11 +105,11 @@ public:
 	//Геометрические параметры объекта
 	//Validation object
 	
-	bool isValid;
+	bool isDefined;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud; //Массив хранящий реальные координаты всех точек объекта
 
 	int step_degree; //Step in degree for Searching optimal boundingbox
-	int max_degree; //Cout degree where searching optimal boundingbox
+	int max_degree; //Count degree where searching optimal boundingbox
 	float objectDensity; //Count of point cloud grid in x, y, z dimentions
 
 	//Moving to position
@@ -154,12 +156,11 @@ public:
 	StoredObject(
 		int layerid, 
 		int storageid, 
-		int uid, 
 		pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, 
 		int stepdegree, 
 		int maxdegree, 
 		float objectdensity,
-		string objectname = "");
+		string name = "");
 	
 	//Constructor for init object Stored3Dobject from database
 	StoredObject(
@@ -175,7 +176,10 @@ public:
 		float dbroll,
 		float dbpitch,
 		float dbyaw,
-		int dbobjtype);
+		int dbobjtype,
+		pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud,
+		string dbfilename
+		);
 
 	~StoredObject();
 

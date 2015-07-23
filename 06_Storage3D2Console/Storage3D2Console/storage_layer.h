@@ -69,7 +69,9 @@ public:
 	int storageUID; //Уникальный числовой идентификатор склада
 	time_t AddedDate; //Время добавления слоя
 	float planeDensity;
-	char* last_file_name;
+	//char* last_file_name;
+	string Name; //Не уникальное буквенное обозначение объекта
+	string fileName; //Имя файла в котором хранится облако точек слоя
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr layerNegativeDelta; //Массив типа <float> отрицательных разниц высот точек на данном слое по отношению к предыдущему
 	pcl::PointCloud<pcl::PointXYZ>::Ptr layerPositiveDelta; //Массив типа <float> положительных разниц высот точек на данном слое по отношению к предыдущему 
@@ -84,8 +86,6 @@ public:
 	//Методы слоя
 	StorageLayer(); //Конструктор класса StorageLayer
 	StorageLayer(const StorageLayer& storagelayer);
-	StorageLayer(int layeruid, int storageuid); //Конструктор класса StorageLayer
+	StorageLayer(int storageuid); //Конструктор класса StorageLayer
 	~StorageLayer();
-
-	void SaveLayerToPCD(bool firstLayer = false, bool lastmodeon = false);
 };

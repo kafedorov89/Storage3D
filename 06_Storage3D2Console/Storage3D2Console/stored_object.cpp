@@ -13,19 +13,11 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	UID = storedobject.UID;
 	storageUID = storedobject.storageUID;
 	addedLayerID = storedobject.addedLayerID;
-	//removedLayerID = storedobject.removedLayerID;
-	//ObjectName = storedobject.ObjectName;
-	//ObjectTypeName = storedobject.ObjectTypeName;
-	//ObjectType = storedobject.ObjectType;
 	AddedDate = storedobject.AddedDate;
-	//RemovedDate = storedobject.RemovedDate;
-	isValid = storedobject.isValid;
-	//try{
+	isDefined = storedobject.isDefined;
+	
 	object_cloud = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>(*storedobject.object_cloud));
-	//}
-	//catch (std::exception& e){
-
-	//}
+	
 	step_degree = storedobject.step_degree;
 	max_degree = storedobject.max_degree;
 	objectDensity = storedobject.objectDensity;
@@ -36,12 +28,8 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	lenght = storedobject.lenght;
 	height = storedobject.height;
 	square = storedobject.square;
-	ObjectName = storedobject.ObjectName;
-
-	//position = new Eigen::Vector3f(*storedobject.position);
-	//quaternion_to_bbox = storedobject.quaternion_to_bbox;//new Eigen::Quaternionf(*storedobject.quaternion_to_bbox);
-	//jump_to_bbox = new Eigen::Affine3f(*storedobject.jump_to_bbox);
-	//jump_to_zero = new Eigen::Affine3f(*storedobject.jump_to_zero);
+	Name = storedobject.Name;
+	fileName = storedobject.fileName;
 
 	position = storedobject.position;
 	quaternion_to_bbox = storedobject.quaternion_to_bbox;
@@ -56,12 +44,11 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 StoredObject::StoredObject(
 	int layerid, 
 	int storageid, 
-	int uid, 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, 
 	int stepdegree, 
 	int maxdegree, 
 	float objectdensity, 
-	string objectname)
+	string name)
 {
 	addedLayerID = layerid;
 	
@@ -70,8 +57,18 @@ StoredObject::StoredObject(
 	AddedDate = rawtime;
 	
 	storageUID = storageid;
-	UID = uid;
 	
+	//Generation object UID via current time
+	time_t rawtime;
+	struct tm * timeinfo;
+	std::string timestring;
+	time(&rawtime);
+	UID = rawtime;
+
+	std::stringstream fn;
+	fn << "object_" << UID << ".pcd";
+	fileName = fn.str();
+
 	width = FLT_MAX;
 	lenght = FLT_MAX;
 	height = FLT_MAX;
@@ -86,15 +83,16 @@ StoredObject::StoredObject(
 	max_degree = maxdegree;
 
 	objectDensity = objectdensity;
+	
 	VoxelGridFiltration(cloud, object_cloud, objectdensity);
 
 	yaw = 0; //Angle oZ in degrees
 	roll = 0; //Angle oX in degrees
 	pitch = 0; //Angle oX in degrees
 
-	isValid = false;
+	isDefined = false;
 
-	ObjectName = objectname;
+	Name = name;
 	
 	//find_bbox();
 	//check_valid_object();
@@ -115,10 +113,13 @@ StoredObject::StoredObject(
 	float dbroll, 
 	float dbpitch, 
 	float dbyaw,
-	int dbobjtype)
+	int dbobjtype,
+	pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud,
+	string dbfilename
+	)
 {
 	UID = dbuid;
-	ObjectName = dbname;
+	Name = dbname;
 	ObjectType = dbobjtype;
 
 	AddedDate = dbadd_date;
@@ -132,11 +133,12 @@ StoredObject::StoredObject(
 	pitch = dbpitch;
 	yaw = dbyaw;
 
-	object_cloud = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>());
-
 	position(0) = dbposition_x;
 	position(1) = dbposition_y;
 	position(2) = dbposition_z;
+
+	fileName = dbfilename;
+	object_cloud = //FIXME. Load point cloud from fileName  //boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>());
 
 	//find_bbox();
 	//check_valid_object();
@@ -150,6 +152,8 @@ StoredObject::~StoredObject()
 void StoredObject::find_valid_object_type(float limit_array[6], float valid_percent){
 	
 	//FIXME. Should work with "object_cloud"
+
+	//ObjectType = ; //Идентификатор типа объекта (-1 - Undefined; 0 - Parallelogramm; 1 - VerticalCylinder; 2 - HorizontalCylinder)
 	
 	std::cout << " width = " << width << std::endl;
 	std::cout << " lenght = " << lenght << std::endl;
@@ -159,16 +163,16 @@ void StoredObject::find_valid_object_type(float limit_array[6], float valid_perc
 		//Cheking for points count in founded rectangle relate of square. 70% should be covered by points
 		if ((float)object_cloud->size() / ((width / objectDensity) * (lenght / objectDensity)) > valid_percent){
 			std::cout << " Valid 2d object" << std::endl;
-			isValid = true;
+			isDefined = true;
 		}
 		else{
 			std::cout << " Not Valid 2d object" << std::endl;
-			isValid = false;
+			isDefined = false;
 		}
 	}
 	else{
 		std::cout << " Not Valid 2d object" << std::endl;
-		isValid = false;
+		isDefined = false;
 	}
 }
 
@@ -331,3 +335,4 @@ void StoredObject::CalcJamp(){
 	quaternion_to_bbox = Eigen::Quaternionf(rotational_matrix_OBB3f); //FIXME
 	quaternion_to_zero = Eigen::Quaternionf(rotational_matrix_ZERO3f); //FIXME
 }
+

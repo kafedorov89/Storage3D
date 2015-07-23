@@ -6,18 +6,16 @@
 using namespace std;
 
 Storage::Storage(int uid,
-	float deltalimit,
-	bool enablevoxelfiltration,
-	bool enableplanefiltration,
-	bool enablenoizefiltration, 
-	char* dbname)
+	char* dbname,
+	char* dbfolder,
+	char* layersfolder, 
+	char* objectsfolder)
 {
 	UID = uid;
-	deltaLimit = deltalimit;
-	enableVoxelFiltration = enablevoxelfiltration;
-	enablePlaneFiltration = enableplanefiltration;
-	enableNoizeFiltration = enablenoizefiltration;
 	dbName = dbname;
+	dbFolder = dbfolder;
+	layersFolder = layersfolder;
+	objectsFolder = objectsfolder;
 }
 
 Storage::~Storage()
@@ -84,10 +82,10 @@ void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClaste
 
 
 	if (enablePlaneFiltration){
-		//CloudPlaneFiltration(newlayer.DepthMap, newlayer.DepthMap, DistanceThreshold);
-		CloudPlaneFiltration(delta_pos_cloud, delta_pos_cloud, PlaneClasterTollerance, MinPlaneClasterSize, MaxPlaneClasterSize, CloudZStep);
-		CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud, PlaneClasterTollerance, MinPlaneClasterSize, MaxPlaneClasterSize, CloudZStep);
-		//CloudPlaneFiltration(delta_neg_cloud, delta_neg_cloud, negPlaneClasterTollerance, negMinPlaneClasterSize, negMaxPlaneClasterSize, CloudZStep);
+		//FindPlanes1(newlayer.DepthMap, newlayer.DepthMap, DistanceThreshold);
+		FindPlanes1(delta_pos_cloud, delta_pos_cloud, PlaneClasterTollerance, MinPlaneClasterSize, MaxPlaneClasterSize, CloudZStep);
+		FindPlanes1(delta_neg_cloud, delta_neg_cloud, PlaneClasterTollerance, MinPlaneClasterSize, MaxPlaneClasterSize, CloudZStep);
+		//FindPlanes1(delta_neg_cloud, delta_neg_cloud, negPlaneClasterTollerance, negMinPlaneClasterSize, negMaxPlaneClasterSize, CloudZStep);
 	}
 	
 	LayerList[llSize - 1]->layerPositiveDelta.swap(delta_pos_cloud);
@@ -111,7 +109,7 @@ void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoi
 			//Check length and width of 2d_object
 			test_remover->find_valid_object_type(ObjectLimitSize, valid_percent); //FIXME. 
 
-			if (test_remover->isValid){
+			if (test_remover->isDefined){
 				//Check height in position (center) point
 				pcl::PointCloud<pcl::PointXY>::Ptr oldcloud2d(new pcl::PointCloud<pcl::PointXY>);
 				Get2DCloudFrom3D(LayerList[curLayerUID - 1]->DepthMap, oldcloud2d);
@@ -228,14 +226,11 @@ void Storage::RemoveObject(int objectID){
 void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового слоя
 	StorageLayer* new_Layer = new StorageLayer(newlayer);
 	
-	if (enableVoxelFiltration)
-		VoxelGridFiltration(new_Layer->DepthMap, new_Layer->DepthMap, new_Layer->planeDensity);
-
-	if (enableNoizeFiltration)
-		CloudNoizeFiltration(new_Layer->DepthMap, new_Layer->DepthMap);
-
+	VoxelGridFiltration(new_Layer->DepthMap, new_Layer->DepthMap, new_Layer->planeDensity);
+	CloudNoizeFiltration(new_Layer->DepthMap, new_Layer->DepthMap);
+	
+	SaveCloudToPCD(layersFolder, (char*)new_Layer->fileName.c_str());
 	LayerList.push_back(new_Layer);
-	//FIXME
 }
 
 void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов, добавленных на новом слое
@@ -256,7 +251,7 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 			//FIXME. Add to find_valid_object_type() function or to Anoter function find_object_type(){ } object type recognition (Parallelogram, Cylinder)
 			test_object->find_valid_object_type(ObjectLimitSize, valid_percent);
 
-			if (test_object->isValid){
+			if (test_object->isDefined){
 
 				// 0 - Parallelogramm
 				if (test_object->ObjectType == 0){
@@ -310,20 +305,20 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 
 					//Less than one object 
 					if (object_height < ObjectLimitSize[2]){
-						test_object->isValid = false;
+						test_object->isDefined = false;
 						//Find several or one object
 					}
 
 					//About one object
 					else if (object_height > ObjectLimitSize[2] && object_height < ObjectLimitSize[5]){
-						test_object->isValid = true;
+						test_object->isDefined = true;
 						test_object->UID = (int)rawtime;
 						test_object->position(2) = testPointCenter->z + 0.5f * object_height; //Plus (+) because oZ axis is up side down
 						test_object->height = object_height;
 
 						//Manual settings object's name
 						std::cout << "Enter object name: ";
-						std::cin >> test_object->ObjectName;
+						std::cin >> test_object->Name;
 						std::cout << std::endl;
 
 						test_object->CalcJamp();
@@ -355,12 +350,12 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 							time(&rawtime);
 
 							StoredObject *k_object = new StoredObject(*test_object);
-							k_object->isValid = true;
+							k_object->isDefined = true;
 							k_object->UID = (int)rawtime;
 
 							//Manual settings object's name
 							std::cout << "Enter " << k << "-object name: ";
-							std::cin >> k_object->ObjectName;
+							std::cin >> k_object->Name;
 							std::cout << std::endl;
 
 
@@ -422,6 +417,7 @@ void Storage::AddObjectFromDatabase(StoredObject& newobject){
 
 void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового объекта
 	StoredObject* newObject = new StoredObject(newobject);
+	SaveCloudToPCD(objectsFolder, (char*)newObject->fileName.c_str());
 	ObjectList.push_back(newObject);
 
 	time_t now = time(NULL);
@@ -441,9 +437,9 @@ void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового
 	DataBase->open(dbName);
 	ostringstream querystring; 
 	
-	querystring << "INSERT INTO object(uid, name, add_date, position_x, position_y, position_z, width, lenght, height, roll, pitch, yaw ) VALUES(" <<
+	querystring << "INSERT INTO object(uid, name, add_date, position_x, position_y, position_z, width, lenght, height, roll, pitch, yaw, type, filename) VALUES(" <<
 		newObject->UID << "," <<
-		"'" << newObject->ObjectName << "'" << "," <<
+		"'" << newObject->Name << "'" << "," <<
 		"'" << AddedDate.str() << "'" << "," <<
 		newObject->position(0) << "," <<
 		newObject->position(1) << "," <<
@@ -462,7 +458,9 @@ void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового
 void Storage::initStorageFromDB(){
 	DataBase = new SQLiteDatabase();
 	DataBase->open(dbName);
-	string select_query = "SELECT uid, name, add_date, position_x, position_y, position_z, width, lenght, height, roll, pitch, yaw FROM object WHERE removed = 'FALSE';";
+	
+	//Loading objects
+	string select_query = "SELECT uid, name, add_date, position_x, position_y, position_z, width, lenght, height, roll, pitch, yaw, type, filename FROM object WHERE removed = 'FALSE';";
 
 	//Select fields of all actual objects from DB
 	vector<vector<string>> result = DataBase->query((char*)select_query.c_str());
@@ -478,11 +476,6 @@ void Storage::initStorageFromDB(){
 
 			string dbname = row.at(1);
 
-
-
-
-
-			
 			//ostringstream timestring;
 			//timestring << row.at(2).c
 			//char* addedtimestr = (char*)row.at(2).c_str();
@@ -500,13 +493,7 @@ void Storage::initStorageFromDB(){
 			time_t dbadd_date = mktime(tmadd);
 			//time_t dbadd_date = timegm(&tmadd);
 			//time_t dbadd_date = mktime(&tmadd);
-
-
-
-
-
-
-
+			
 			float dbposition_x = std::atof(row.at(3).c_str());
 			float dbposition_y = std::atof(row.at(4).c_str());
 			float dbposition_z = std::atof(row.at(5).c_str());
@@ -518,6 +505,15 @@ void Storage::initStorageFromDB(){
 			float dbroll = std::atof(row.at(9).c_str());
 			float dbpitch = std::atof(row.at(10).c_str());
 			float dbyaw = std::atof(row.at(11).c_str());
+			float dbobjtype = std::atoi(row.at(12).c_str());
+			string dbfilename = row.at(13);
+
+			//Load object's point cloud from file
+			std::stringstream objfile;
+			objfile << objectsFolder << "\\" << dbfilename;
+			
+			pcl::PointCloud<pcl::PointXYZ>::Ptr dbobjectcloud;
+			pcl::io::loadPCDFile(objfile.str(), *dbobjectcloud);
 
 			AddObjectFromDatabase(*(new StoredObject(
 				dbuid,
@@ -531,49 +527,18 @@ void Storage::initStorageFromDB(){
 				dbheight,
 				dbroll,
 				dbpitch,
-				dbyaw)));
+				dbyaw,
+				dbobjtype,
+				dbobjectcloud,
+				dbfilename
+				)));
 		}
 	}
+
+	string select_query = "SELECT uid FROM layer";
+
 	DataBase->close();
 }
-
-/*void Storage::saveStorageToDB(){
-	//For each object in current state of storage checking for existing infornation in database and update this.
-	DataBase = new SQLiteDatabase(dbName);
-	char* select_query = "SELECT * FROM object WHERE removed = 'FALSE';";
-
-	//Select fields of all actual objects from DB
-	vector<vector<string>> result = DataBase->query(select_query);
-
-	//Create objects with received fields and add to storage's ObjectList
-	for (vector<vector<string>>::iterator it = result.begin(); it < result.end(); ++it)
-	{
-		vector<string> row = *it;
-
-		for (int i = 0; ObjectList.size(); i++){
-
-		}
-	}
-
-	UID = dbuid;
-	ObjectName = dbname;
-
-	AddedDate = dbadd_date;
-	RemovedDate = dbremove_date;
-	removed = dbremoved;
-
-	width = dbwidth;
-	lenght = dblenght;
-	height = dbheight;
-
-	roll = dbroll;
-	pitch = dbpitch;
-	yaw = dbyaw;
-
-	position(0) = dbposition_x;
-	position(1) = dbposition_y;
-	position(2) = dbposition_z;
-}*/
 
 /*vector<int> Storage::GetAllObjects(){
 

@@ -24,12 +24,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	//KinectGrabber grabber = KinectGrabber(0, false);
 	KinectGrab *grabber = new KinectGrab();
 	bool inited_from_file = false;
+	bool inited_from_db = true;
 	//Storage *storage = new Storage(delta_limit, plane_threshold);
-	Storage* storage = new Storage(1, delta_limit, enable_voxelgridfiltration, enable_planefiltration, enable_noizefiltration, "Storage3D.sqlite");
+	Storage* storage = new Storage(1, "Storage3D.sqlite", "./database", "./database/layers", "./database/objects");
 
 	std::cout << "Loading state from database..." << std::endl;
+	
 	if (work_with_db){
 		storage->initStorageFromDB(); //Keep that initialize db could be used with correct start state (same state as was saved in last exit)
+		inited_from_db = true;
 	}
 
 	pcl::visualization::PCLVisualizer *delta_viewer = new pcl::visualization::PCLVisualizer("Delta Viewer");
@@ -37,14 +40,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	pcl::visualization::PCLVisualizer *neg_claster_viewer = new pcl::visualization::PCLVisualizer("Negative Claster Viewer"); //DEBUG
 	
 	vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> LayerFromFile;
-	int layerUID = 0;
+	int layerID = 0;
 
-	StorageLayer* oldlayer = new StorageLayer(layerUID, storage->UID);
+	StorageLayer* oldlayer = new StorageLayer(storage->UID);
 
 	//Loading files instead stream from 3D-scanner
 	if (working_with_file){
 		std::cout << "Working with files..." << std::endl;
-		string dirpath = "./pcd/experimental_pcd/";
+		string dirpath = "./database/experimental_pcd/";
 		DIR *dir = opendir(dirpath.c_str());
 
 		if (dir)
@@ -66,6 +69,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					LayerFromFile.push_back(cloud);
 				}
 			}
+			inited_from_file = true;
 		}
 		else
 		{
@@ -73,7 +77,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 
 		//Save first layer
-		oldlayer->DepthMap = LayerFromFile[layerUID];
+		oldlayer->DepthMap = LayerFromFile[layerID];
 	}
 	else{
 		std::cout << "Working with Kinect..." << std::endl;
@@ -87,48 +91,20 @@ int _tmain(int argc, _TCHAR* argv[])
 			return 0;
 		}
 
-		//Try to find previous saved state of Storage in last_layer.pcd file
-		/*string dirpath = "./"; //DEBUG
-		DIR *dir = opendir(dirpath.c_str());
-
-		if (dir)
-		{
-			struct dirent *ent;
-			int i = 0;
-			while ((ent = readdir(dir)) != NULL)
-			{
-				i++;
-				if (((std::string)ent->d_name).find(oldlayer->last_file_name) != string::npos)
-				{
-					std::stringstream ss;
-					ss << dirpath << ent->d_name;
-					std::cout << ss.str() << std::endl;
-					pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-					//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = new pcl::PointCloud<pcl::PointXYZ>();
-					pcl::io::loadPCDFile(ss.str(), *cloud);
-
-					oldlayer->DepthMap = cloud;
-					inited_from_file = true;
-				}
-			}
-		}
-		else
-		{
-			cout << "Error opening directory!" << endl;
-		}*/ //DEBUG
+		//Start grabber
+		//FIXME. Here should be initialization for scanner Lase, later
+		grabber->start();
 		
-		//if (!inited_from_file){ // DEBUG
-
+		if (work_with_db){
+			oldlayer->DepthMap = storage->LayerList[storage->LayerList.size() - 1]->DepthMap; //FIXME. Should be add upload depth maps from files with path from database 
+		}
+		else{
 			//Grab layer
-			grabber->start();
 			grabber->getCloud();
-
-			//FIXME. Add calculation delta for validation state after start
-
 			//Save first layer
 			oldlayer->DepthMap = grabber->PointCloudXYZPtr; //FIXME. Add initialization from file or from last saved layer's DepthMap
 			//oldlayer->SaveLayerToPCD(true, save_only_last);
-		//} // DEBUG
+		}	
 	}
 
 	//Opening and setting pcl vizualizer's windows
@@ -154,10 +130,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	//Main cycle for listen keys press
 	std::cout << std::endl << "Ready for scan layers..." << std::endl;
-	
 	bool needshowobjects = true;
 	while (true){
-
 
 		//Showing actual and removed objects
 		if (needshowobjects){
@@ -186,11 +160,11 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 		}
 		
-
-		if (GetKeyState(VK_SPACE) < 0 || inited_from_file){
-			inited_from_file = false;
+		//Make new layer with press Space key
+		if (GetKeyState(VK_SPACE) < 0 || inited_from_db){
+			inited_from_db = false;
 			needshowobjects = true;
-			layerUID++;
+			layerID++;
 
 			//Set camera position in viewers windows
 			delta_viewer->loadCameraParameters("viewer.ini");
@@ -209,11 +183,13 @@ int _tmain(int argc, _TCHAR* argv[])
 			neg_claster_viewer->removeAllShapes(); //DEBUG
 
 			//Grab layer
-			StorageLayer* newlayer = new StorageLayer(layerUID, storage->UID);
+			StorageLayer* newlayer = new StorageLayer(storage->UID);
+			//grab from file
 			if (working_with_file){
-				if (layerUID > (LayerFromFile.size() - 1))
+				if (layerID > (LayerFromFile.size() - 1))
 					break;
-				newlayer->DepthMap = LayerFromFile[layerUID];
+				newlayer->DepthMap = LayerFromFile[layerID];
+			//grab from scanner
 			}else{
 				grabber->getCloud();
 				newlayer->DepthMap = grabber->PointCloudXYZPtr;
@@ -222,8 +198,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			//Calc delta
 			newlayer->planeDensity = plane_density;
 			storage->AddNewLayer(*newlayer);
-			std::cout << "Calcutating delta..." << std::endl;
-			 
+			
 			storage->ObjectLimitSize[0] = object_minx;
 			storage->ObjectLimitSize[1] = object_miny;
 			storage->ObjectLimitSize[2] = object_minz;
@@ -231,6 +206,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			storage->ObjectLimitSize[4] = object_maxy;
 			storage->ObjectLimitSize[5] = object_maxz;
 
+			std::cout << "Calcutating delta..." << std::endl;
 			storage->CalcNewLayerDelta(plane_claster_tolerance, min_plane_claster_size,	max_plane_claster_size, cloud_z_step);
 			
 			
@@ -250,18 +226,10 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			//oldlayer->DepthMap.swap(newlayer->DepthMap);
 
-			//std::cout << "Finding positive clasters..." << std::endl;
+			std::cout << "Finding positive clasters..." << std::endl;
+			
 			//Extract clasters from positive delta
-			//Auto calculation claster's parameters
 			float cur_planeDensity = storage->LayerList[storage->LayerList.size() - 1]->planeDensity;
-			//float min_mult = 1;
-			//float max_mult = 10;
-			//float toll_milt = 2;
-			//claster_tolerance = toll_milt * cur_planeDensity;
-			//minpoints = (int)(min_mult * (((float)object_minx / (float)cur_planeDensity) * ((float)object_miny / (float)cur_planeDensity)));
-			//maxpoints = (int)(max_mult * (((float)object_maxx / (float)cur_planeDensity) * ((float)object_maxy / (float)cur_planeDensity)));
-			
-			
 			FindClasters(storage->LayerList[storage->LayerList.size() - 1]->layerPositiveDelta, 
 				storage->LayerList[storage->LayerList.size() - 1]->PositiveClasterList, 
 				obj_claster_tolerance, 
@@ -275,8 +243,6 @@ int _tmain(int argc, _TCHAR* argv[])
 					ss << "positive_claster_" << i;
 
 					pos_claster_viewer->addPointCloud(storage->LayerList[storage->LayerList.size() - 1]->PositiveClasterList[i], ss.str());
-
-					//claster_viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 200.0f / (float)255.0, (float)(rand() % 255) / (float)255.0, 200.0f / (float)255.0, ss.str());
 					pos_claster_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)(rand() % 255) / (float)255.0, (float)(rand() % 255) / (float)255.0, (float)(rand() % 255) / (float)255.0, ss.str());
 
 					pos_claster_viewer->spinOnce();
@@ -339,34 +305,10 @@ int _tmain(int argc, _TCHAR* argv[])
 				std::cout << "Layer haven't removers..." << std::endl;
 			}
 
-			//Show actual and removed objects
- 			/*if (storage->ObjectList.size()){ //DEBUG
-				for (int i = 0; i < storage->ObjectList.size(); i++){
-					std::stringstream ss;
-					ss << "object_" << i;
-
-					pos_claster_viewer->addCube(storage->ObjectList[i]->position,
-						storage->ObjectList[i]->quaternion_to_bbox,
-						storage->ObjectList[i]->width,
-						storage->ObjectList[i]->lenght,
-						storage->ObjectList[i]->height, ss.str());
-
-					if (!storage->ObjectList[i]->removed){
-						pos_claster_viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0f, 1.0f, 0.0f, ss.str());
-					}
-					else{
-						pos_claster_viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0f, 0.0f, 0.0f, ss.str());
-					}
-				}
-			}
-			else{
-				std::cout << "Storage haven't objects..." << std::endl;
-			}*/ //DEBUG
-
 			delete newlayer;
 
 			//std::cout << "Saving state to database..." << std::endl;
-			//storage->saveStorageToDB();
+			//storage->saveStorageToDB(); //DEBUG
 
 			std::cout << std::endl << "Ready for scan layers..." << std::endl;
 		}
@@ -377,10 +319,6 @@ int _tmain(int argc, _TCHAR* argv[])
 			boost::this_thread::sleep(boost::posix_time::microseconds(1000));
 			//break;
 		}
-
-		/*if (GetKeyState(VK_Q) < 0){
-			std::cout << "Ready for "
-		}*/
 
 		if (GetKeyState(VK_ESCAPE) < 0){
 			break;
