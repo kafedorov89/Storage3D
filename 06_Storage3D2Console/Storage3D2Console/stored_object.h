@@ -71,7 +71,6 @@
 #include <vtkBoundingBox.h>
 #include <vtkOBBTree.h>
 #include <pcl/filters/voxel_grid.h>
-
 #include "PCLFunctions.h"
 
 using namespace std;
@@ -87,16 +86,15 @@ public:
 
 	//Параметры связи объекта с другими сущностями склада
 	int UID; //Уникальный числовой идентификатор объекта
-	int storageUID; //Уникальный идентификатор склада на который добавлен объект
+	int storageID; //Уникальный идентификатор склада на который добавлен объект
 	
-	int addedLayerID; //Идентификатор слоя на котором был добавлен объект
-	int removedLayerID; //идентификатор слоя на котором объект был удален
+	int layerID; //Идентификатор слоя на котором был добавлен объект
+	//int removedLayerID; //идентификатор слоя на котором объект был удален
 
 	//Собственные идентификаторы объекта
 	string Name; //Не уникальное буквенное обозначение объекта
 	string fileName; //Имя файла в котором хранится облако точек объекта
 
-	string ObjectTypeName; //Название типа объекта 
 	int ObjectType; //Идентификатор типа объекта (-1 - Undefined; 0 - Parallelogramm; 1 - VerticalCylinder; 2 - HorizontalCylinder)
 	time_t AddedDate; //Время добавления объекта на склад
 	time_t RemovedDate; //Время удаления объекта со склада
@@ -105,7 +103,7 @@ public:
 	//Геометрические параметры объекта
 	//Validation object
 	
-	bool isDefined;
+	bool defined;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud; //Массив хранящий реальные координаты всех точек объекта
 
 	int step_degree; //Step in degree for Searching optimal boundingbox
@@ -142,7 +140,7 @@ public:
 	int minPossibleObjCount; //Minimum possible count 
 	int maxPossibleObjCount; //Maximum possible count
 
-	float square;
+	//float square;
 
 	//-----------------------------------------------------------------------------------------------
 	//Методы хранимого объекта
@@ -165,8 +163,12 @@ public:
 	//Constructor for init object Stored3Dobject from database
 	StoredObject(
 		int dbuid,
+		int dblayer_id,
+		int dbstorage_id,
 		string dbname,
 		time_t dbadd_date,
+		time_t dbremoved_date,
+		bool dbremoved,
 		float dbposition_x,
 		float dbposition_y,
 		float dbposition_z,
@@ -177,8 +179,14 @@ public:
 		float dbpitch,
 		float dbyaw,
 		int dbobjtype,
-		pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud,
-		string dbfilename
+		bool dbdefined,
+		pcl::PointCloud<pcl::PointXYZ>::Ptr dbobjectcloud,
+		string dbfilename,
+		bool dbis_group,
+		bool dbis_horizontal_group,
+		bool dbis_vertical_group,
+		int dbmin_poss_count,
+		int dbmax_poss_count
 		);
 
 	~StoredObject();

@@ -11,23 +11,25 @@ StoredObject::StoredObject(){
 StoredObject::StoredObject(const StoredObject& storedobject){
 	removed = storedobject.removed;
 	UID = storedobject.UID;
-	storageUID = storedobject.storageUID;
-	addedLayerID = storedobject.addedLayerID;
+	storageID = storedobject.storageID;
+	layerID = storedobject.layerID;
 	AddedDate = storedobject.AddedDate;
-	isDefined = storedobject.isDefined;
+	defined = storedobject.defined;
 	
 	object_cloud = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>(*storedobject.object_cloud));
 	
 	step_degree = storedobject.step_degree;
 	max_degree = storedobject.max_degree;
 	objectDensity = storedobject.objectDensity;
+	
 	roll = storedobject.roll;
 	pitch = storedobject.pitch;
 	yaw = storedobject.yaw;
+	
 	width = storedobject.width;
 	lenght = storedobject.lenght;
 	height = storedobject.height;
-	square = storedobject.square;
+	//square = storedobject.square;
 	Name = storedobject.Name;
 	fileName = storedobject.fileName;
 
@@ -50,13 +52,13 @@ StoredObject::StoredObject(
 	float objectdensity, 
 	string name)
 {
-	addedLayerID = layerid;
+	layerID = layerid;
 	
 	time_t rawtime;
 	time(&rawtime);
 	AddedDate = rawtime;
 	
-	storageUID = storageid;
+	storageID = storageid;
 	
 	//Generation object UID via current time
 	time_t rawtime;
@@ -77,7 +79,7 @@ StoredObject::StoredObject(
 	isHorizontalGroup = false;
 	isVerticalGroup = false;
 
-	square = FLT_MAX;
+	//square = FLT_MAX;
 
 	step_degree = stepdegree;
 	max_degree = maxdegree;
@@ -90,7 +92,7 @@ StoredObject::StoredObject(
 	roll = 0; //Angle oX in degrees
 	pitch = 0; //Angle oX in degrees
 
-	isDefined = false;
+	defined = false;
 
 	Name = name;
 	
@@ -101,9 +103,13 @@ StoredObject::StoredObject(
 
 //Constructor for init object from database
 StoredObject::StoredObject(
-	int dbuid, 
-	string dbname, 
+	int dbuid,
+	int dblayer_id,
+	int dbstorage_id,
+	string dbname,
 	time_t dbadd_date,
+	time_t dbremoved_date,
+	bool dbremoved,
 	float dbposition_x, 
 	float dbposition_y, 
 	float dbposition_z, 
@@ -114,16 +120,27 @@ StoredObject::StoredObject(
 	float dbpitch, 
 	float dbyaw,
 	int dbobjtype,
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud,
-	string dbfilename
+	bool dbdefined,
+	pcl::PointCloud<pcl::PointXYZ>::Ptr dbobjectcloud,
+	string dbfilename,
+	bool dbis_group,
+	bool dbis_horizontal_group,
+	bool dbis_vertical_group,
+	int dbmin_poss_count,
+	int dbmax_poss_count
 	)
 {
 	UID = dbuid;
-	Name = dbname;
-	ObjectType = dbobjtype;
+	layerID = dblayer_id;
+	storageID = dbstorage_id;
 
+	Name = dbname;
 	AddedDate = dbadd_date;
-	removed = false;
+
+	removed = dbremoved;
+	if (removed){
+		RemovedDate = dbremoved_date;
+	}
 
 	width = dbwidth;
 	lenght = dblenght;
@@ -137,12 +154,18 @@ StoredObject::StoredObject(
 	position(1) = dbposition_y;
 	position(2) = dbposition_z;
 
+	ObjectType = dbobjtype;
+	defined = dbdefined;
+	object_cloud = dbobjectcloud;
 	fileName = dbfilename;
-	object_cloud = //FIXME. Load point cloud from fileName  //boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>());
-
-	//find_bbox();
-	//check_valid_object();
-	//check_isinside_point(pcl::PointXYZ(0, 0, 0));
+	
+	isGroup = dbis_group;
+	isHorizontalGroup = dbis_horizontal_group;
+	isVerticalGroup = dbis_vertical_group;
+	minPossibleObjCount = dbmin_poss_count;
+	maxPossibleObjCount = dbmax_poss_count;
+	
+	CalcJamp();
 }
 
 StoredObject::~StoredObject()
@@ -163,16 +186,16 @@ void StoredObject::find_valid_object_type(float limit_array[6], float valid_perc
 		//Cheking for points count in founded rectangle relate of square. 70% should be covered by points
 		if ((float)object_cloud->size() / ((width / objectDensity) * (lenght / objectDensity)) > valid_percent){
 			std::cout << " Valid 2d object" << std::endl;
-			isDefined = true;
+			defined = true;
 		}
 		else{
 			std::cout << " Not Valid 2d object" << std::endl;
-			isDefined = false;
+			defined = false;
 		}
 	}
 	else{
 		std::cout << " Not Valid 2d object" << std::endl;
-		isDefined = false;
+		defined = false;
 	}
 }
 

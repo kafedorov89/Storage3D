@@ -17,13 +17,13 @@ StorageLayer::StorageLayer(){ //Конструктор класса StorageLayer
 
 StorageLayer::StorageLayer(const StorageLayer& storagelayer){
 	UID = storagelayer.UID;
-	storageUID = storagelayer.storageUID;
+	storageID = storagelayer.storageID;
 	AddedDate = storagelayer.AddedDate;
 	PositiveClasterList = storagelayer.PositiveClasterList;
 	NegativeClasterList = storagelayer.NegativeClasterList;
 	objectForAddList = storagelayer.objectForAddList;
 	removerList = storagelayer.removerList;
-	planeDensity = storagelayer.planeDensity;
+	layerDensity = storagelayer.layerDensity;
 	//last_file_name = storagelayer.last_file_name;
 	fileName = storagelayer.fileName;
 
@@ -32,7 +32,7 @@ StorageLayer::StorageLayer(const StorageLayer& storagelayer){
 	DepthMap = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>(*storagelayer.DepthMap));
 }
 
-StorageLayer::StorageLayer(int storageuid){ //Конструктор класса StorageLayer
+StorageLayer::StorageLayer(int storageid){ //Конструктор класса StorageLayer
 	layerNegativeDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
 	layerPositiveDelta = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
 	DepthMap = boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>(new pcl::PointCloud<pcl::PointXYZ>);
@@ -49,7 +49,24 @@ StorageLayer::StorageLayer(int storageuid){ //Конструктор класса StorageLayer
 	fileName = fn.str();
 
 	//last_file_name = "last_layer.pcd";
-	storageUID = storageuid;
+	storageID = storageid;
+}
+
+//Constructor for init layer from database
+StorageLayer::StorageLayer(
+	int dbuid,
+	int dbstorage_id,
+	time_t dbadd_date,
+	pcl::PointCloud<pcl::PointXYZ>::Ptr dblayercloud,
+	string dbfilename,
+	){
+	
+	UID = dbuid;
+	storageID = dbstorage_id;
+	AddedDate = 
+	fileName
+	DepthMap
+
 }
 
 StorageLayer::~StorageLayer(){
