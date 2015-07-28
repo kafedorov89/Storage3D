@@ -95,7 +95,6 @@ void loadSettingsFile(){
 				valid_percent = key.second.get_value<float>();
 			if (key.first == "nearest_point_count")
 				nearest_point_count = key.second.get_value<int>();
-
 			if (key.first == "work_with_file")
 				working_with_file = key.second.get_value<bool>();
 			if (key.first == "saving_state")

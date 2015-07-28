@@ -47,6 +47,7 @@ using namespace std;
 #include <pcl/io/pcd_io.h>
 
 bool str_to_bool(string boolstr);
+string bool_to_str(bool booleanvalue);
 void SaveCloudToPCD(char* folder, char* name, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
 void VoxelGridFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr &voxeled_cloud, float voxeldensity);

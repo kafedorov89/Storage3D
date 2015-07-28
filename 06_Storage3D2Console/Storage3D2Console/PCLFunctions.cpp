@@ -15,6 +15,15 @@ bool str_to_bool(string boolstr){
 	}
 }
 
+string bool_to_str(bool booleanvalue){
+	if (booleanvalue){
+		return "TRUE";
+	}
+	else{
+		return "FLASE";
+	}
+}
+
 void VoxelGridFiltration(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr &voxeled_cloud, float voxeldensity){
 	pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::VoxelGrid<pcl::PointXYZ> vg;

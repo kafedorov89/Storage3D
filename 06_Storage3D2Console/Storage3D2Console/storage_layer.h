@@ -66,11 +66,11 @@ public:
 	//-----------------------------------------------------------------------------------------------
 	//Поля слоя
 	int UID; //Уникальный числовой идентификатор слоя
-	int storageUID; //Уникальный числовой идентификатор склада
+	int storageID; //Уникальный числовой идентификатор склада
 	time_t AddedDate; //Время добавления слоя
-	float planeDensity;
+	float layerDensity;
 	//char* last_file_name;
-	string Name; //Не уникальное буквенное обозначение объекта
+	//string Name; //Не уникальное буквенное обозначение объекта
 	string fileName; //Имя файла в котором хранится облако точек слоя
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr layerNegativeDelta; //Массив типа <float> отрицательных разниц высот точек на данном слое по отношению к предыдущему
@@ -86,6 +86,15 @@ public:
 	//Методы слоя
 	StorageLayer(); //Конструктор класса StorageLayer
 	StorageLayer(const StorageLayer& storagelayer);
-	StorageLayer(int storageuid); //Конструктор класса StorageLayer
+	StorageLayer(int storageid); //Конструктор класса StorageLayer
+	//Constructor for init object Stored3Dobject from database
+	StorageLayer(
+		int dbuid,
+		int dbstorage_id,
+		time_t dbadd_date,
+		pcl::PointCloud<pcl::PointXYZ>::Ptr dblayercloud,
+		string dbfilename
+		);
+
 	~StorageLayer();
 };

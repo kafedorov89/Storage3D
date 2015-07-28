@@ -31,7 +31,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	std::cout << "Loading state from database..." << std::endl;
 	
 	if (work_with_db){
-		storage->initStorageFromDB(); //Keep that initialize db could be used with correct start state (same state as was saved in last exit)
+		storage->initObjectsFromDB(); //Keep that initialize db could be used with correct start state (same state as was saved in last exit)
+		storage->initLayersFromDB();
 		inited_from_db = true;
 	}
 
@@ -63,7 +64,6 @@ int _tmain(int argc, _TCHAR* argv[])
 					ss << dirpath << ent->d_name;
 					std::cout << ss.str() << std::endl;
 					pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-					//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = new pcl::PointCloud<pcl::PointXYZ>();
 					pcl::io::loadPCDFile(ss.str(), *cloud);
 
 					LayerFromFile.push_back(cloud);
@@ -76,9 +76,11 @@ int _tmain(int argc, _TCHAR* argv[])
 			cout << "Error opening directory!" << endl;
 		}
 
-		//Save first layer
+		//Load first oldLayer from file
 		oldlayer->DepthMap = LayerFromFile[layerID];
 	}
+	//or
+	//Working with 3D-scanner
 	else{
 		std::cout << "Working with Kinect..." << std::endl;
 
@@ -87,7 +89,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		catch (std::exception& e){
 			std::cout << "Kinect error: " << e.what() << "!" << std::endl;
-			//cin.get();
 			return 0;
 		}
 
@@ -96,14 +97,13 @@ int _tmain(int argc, _TCHAR* argv[])
 		grabber->start();
 		
 		if (work_with_db){
-			oldlayer->DepthMap = storage->LayerList[storage->LayerList.size() - 1]->DepthMap; //FIXME. Should be add upload depth maps from files with path from database 
+			oldlayer->DepthMap = storage->LayerList[storage->LayerList.size() - 1]->DepthMap;
 		}
 		else{
 			//Grab layer
 			grabber->getCloud();
-			//Save first layer
-			oldlayer->DepthMap = grabber->PointCloudXYZPtr; //FIXME. Add initialization from file or from last saved layer's DepthMap
-			//oldlayer->SaveLayerToPCD(true, save_only_last);
+			//Load first oldLayer from file
+			oldlayer->DepthMap = grabber->PointCloudXYZPtr;
 		}	
 	}
 
@@ -125,7 +125,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	neg_claster_viewer->setPosition(0, 600);
 	neg_claster_viewer->loadCameraParameters("viewer.ini");
 
-	oldlayer->planeDensity = plane_density;
+	oldlayer->layerDensity = plane_density;
 	storage->AddNewLayer(*oldlayer);
 
 	//Main cycle for listen keys press
@@ -184,21 +184,23 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			//Grab layer
 			StorageLayer* newlayer = new StorageLayer(storage->UID);
-			//grab from file
+			//Grab from file
 			if (working_with_file){
 				if (layerID > (LayerFromFile.size() - 1))
 					break;
 				newlayer->DepthMap = LayerFromFile[layerID];
-			//grab from scanner
+			//or
+			//Grab from scanner
 			}else{
 				grabber->getCloud();
 				newlayer->DepthMap = grabber->PointCloudXYZPtr;
 			}
 
-			//Calc delta
-			newlayer->planeDensity = plane_density;
+			//Add layer to storage
+			newlayer->layerDensity = plane_density;
 			storage->AddNewLayer(*newlayer);
 			
+			//Set limits for object size from config.ini
 			storage->ObjectLimitSize[0] = object_minx;
 			storage->ObjectLimitSize[1] = object_miny;
 			storage->ObjectLimitSize[2] = object_minz;
@@ -206,16 +208,10 @@ int _tmain(int argc, _TCHAR* argv[])
 			storage->ObjectLimitSize[4] = object_maxy;
 			storage->ObjectLimitSize[5] = object_maxz;
 
+			//Calc layers delta
 			std::cout << "Calcutating delta..." << std::endl;
 			storage->CalcNewLayerDelta(plane_claster_tolerance, min_plane_claster_size,	max_plane_claster_size, cloud_z_step);
-			
-			
-			if (saving_state){
-				newlayer->SaveLayerToPCD(false, save_only_last);
-				
-				//oldlayer = newlayer; // DEBUG
-			}
-
+		
 			//Show positive delta cloud
 			delta_viewer->addPointCloud(storage->LayerList[storage->LayerList.size() - 1]->layerPositiveDelta, "delta_pos_cloud", 0); //DEBUG
 			delta_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, (float)0 / (float)255, (float)255 / (float)255, (float)0 / (float)255, "delta_pos_cloud"); //DEBUG
@@ -229,7 +225,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			std::cout << "Finding positive clasters..." << std::endl;
 			
 			//Extract clasters from positive delta
-			float cur_planeDensity = storage->LayerList[storage->LayerList.size() - 1]->planeDensity;
+			float cur_layerDensity = storage->LayerList[storage->LayerList.size() - 1]->layerDensity;
 			FindClasters(storage->LayerList[storage->LayerList.size() - 1]->layerPositiveDelta, 
 				storage->LayerList[storage->LayerList.size() - 1]->PositiveClasterList, 
 				obj_claster_tolerance, 
