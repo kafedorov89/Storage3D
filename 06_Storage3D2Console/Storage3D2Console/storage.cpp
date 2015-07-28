@@ -239,10 +239,7 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 	if (LayerList[curLayerUID]->PositiveClasterList.size() > 0){
 		for (int i = 0; i < LayerList[curLayerUID]->PositiveClasterList.size(); i++){
 
-			time_t rawtime;
-			time(&rawtime);
-
-			StoredObject *test_object = new StoredObject(LayerList[curLayerUID]->UID, UID, (int)rawtime, LayerList[curLayerUID]->PositiveClasterList[i], 1, 180, objectdensity);
+			StoredObject *test_object = new StoredObject(LayerList[curLayerUID]->UID, UID, LayerList[curLayerUID]->PositiveClasterList[i], 1, 180, objectdensity);
 
 			//Finding up cover of 2d_object
 			test_object->find_bbox();
