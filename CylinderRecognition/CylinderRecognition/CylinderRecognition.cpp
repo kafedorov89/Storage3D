@@ -70,7 +70,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	//Cycle for find planes
 
-	int min_plane_size = 250;
+	int min_plane_size = 200;
 	float planeNormalDistanceWeight = 0.1;
 	int planeMaxIterations = 1000;
 	float planeDistanceThreshold = voxeldensity * 2;
@@ -156,7 +156,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	float DistanceThreshold = voxeldensity * 2;
 	float cylinderMinRadius = 0.01;
 	float cylinderMaxRadius = 0.2;
-	int min_cylinder_size = 100;
+	int min_cylinder_size = 250;
 	
 	int i = 0;
 	while (true){

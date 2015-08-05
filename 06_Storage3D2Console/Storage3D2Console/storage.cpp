@@ -5,6 +5,7 @@
 //using namespace pcl;
 using namespace std;
 
+//
 Storage::Storage(int uid,
 	char* dbname,
 	char* dbfolder,
@@ -22,7 +23,8 @@ Storage::~Storage()
 {
 }
 
-void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep){
+//void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep){
+void Storage::CalcNewLayerDelta(){
 	//Initialization of point clouds source, target and two outputs
 	pcl::PointCloud<pcl::PointXYZ>::Ptr old_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXY>::Ptr old2d_cloud(new pcl::PointCloud<pcl::PointXY>);
@@ -66,32 +68,9 @@ void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClaste
 	//Auto calculation claster's parameters
 	float cur_layerDensity = LayerList[llSize - 1]->layerDensity;
 	
-
-	/*float min_mult = 1; //FIXME. Add flexible settings for density and points count
-	float max_mult = 10;
-	float toll_milt = 1.5;
-	float step_milt = 3;
-	float CloudZStep = step_milt * deltaLimit;
-	float posPlaneClasterTollerance = toll_milt * cur_layerDensity;
-	int posMinPlaneClasterSize = (int)(min_mult * (((float)ObjectLimitSize[0] / (float)cur_layerDensity) * ((float)ObjectLimitSize[1] / (float)cur_layerDensity)));
-	int posMaxPlaneClasterSize = (int)(max_mult * (((float)ObjectLimitSize[3] / (float)cur_layerDensity) * ((float)ObjectLimitSize[4] / (float)cur_layerDensity)));
-
-	float negPlaneClasterTollerance = cur_layerDensity;
-	int negMinPlaneClasterSize = posMinPlaneClasterSize;
-	int negMaxPlaneClasterSize = posMaxPlaneClasterSize;*/
-
-
-	if (enablePlaneFiltration){
-		//FindPlanes1(newlayer.DepthMap, newlayer.DepthMap, DistanceThreshold);
-		FindPlanes1(delta_pos_cloud, delta_pos_cloud, PlaneClasterTollerance, MinPlaneClasterSize, MaxPlaneClasterSize, CloudZStep);
-		FindPlanes1(delta_neg_cloud, delta_neg_cloud, PlaneClasterTollerance, MinPlaneClasterSize, MaxPlaneClasterSize, CloudZStep);
-		//FindPlanes1(delta_neg_cloud, delta_neg_cloud, negPlaneClasterTollerance, negMinPlaneClasterSize, negMaxPlaneClasterSize, CloudZStep);
-	}
-	
 	LayerList[llSize - 1]->layerPositiveDelta.swap(delta_pos_cloud);
 	LayerList[llSize - 1]->layerNegativeDelta.swap(delta_neg_cloud);
 }
-
 
 
 //---------------------------------------------------------------------------------------------------------------------------------------
@@ -105,19 +84,35 @@ void Storage::AddLayerFromDatabase(StorageLayer& newlayer){
 
 //Add new layer
 void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового слоя
-	StorageLayer* new_Layer = new StorageLayer(newlayer);
+	StorageLayer* newLayer = new StorageLayer(newlayer);
 	
-	VoxelGridFiltration(new_Layer->DepthMap, new_Layer->DepthMap, new_Layer->layerDensity);
-	CloudNoizeFiltration(new_Layer->DepthMap, new_Layer->DepthMap);
+	//Apply filtrations
+	VoxelGridFiltration(newLayer->DepthMap, newLayer->DepthMap, newLayer->layerDensity);
+	CloudNoizeFiltration(newLayer->DepthMap, newLayer->DepthMap);
 	
-	SaveCloudToPCD(layersFolder, (char*)new_Layer->fileName.c_str(), new_Layer->DepthMap);
-	LayerList.push_back(new_Layer);
+	//Save layer's cloud to PCD file
+	SaveCloudToPCD(layersFolder, (char*)newLayer->fileName.c_str(), newLayer->DepthMap);
+	LayerList.push_back(newLayer);
+
+	//Save layer to database
+	time_t now = time(NULL);
+	struct tm * timeinfo;
+	ostringstream AddedDate;
+	timeinfo = localtime(&newLayer->AddedDate);
+	AddedDate << std::to_string(1900 + timeinfo->tm_year) << "-" <<
+		std::to_string(timeinfo->tm_mon) << "-" <<
+		std::to_string(timeinfo->tm_mday) << " " <<
+		std::to_string(timeinfo->tm_hour) << ":" <<
+		std::to_string(timeinfo->tm_min) << ":" <<
+		std::to_string(timeinfo->tm_sec);
+
+
 }
 
 //---------------------------------------------------------------------------------------------------------------------------------------
 //Object's functions
 
-//Find objects
+//-- Find objects
 void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов, добавленных на новом слое
 	//int llSize = LayerList.size();
 	
@@ -290,18 +285,21 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 	}
 }
 
-//Add object from DB
+//+ Add object from DB
 void Storage::AddObjectFromDatabase(StoredObject& newobject){
 	StoredObject* newObject = new StoredObject(newobject);
 	ObjectList.push_back(newObject);
 }
 
-//Add new object
+//+ Add new object
 void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового объекта
 	StoredObject* newObject = new StoredObject(newobject);
+	
+	//Save object's cloud to PCD file
 	SaveCloudToPCD(objectsFolder, (char*)newObject->fileName.c_str(), newObject->object_cloud);
 	ObjectList.push_back(newObject);
 
+	//Save object to database
 	time_t now = time(NULL);
 	struct tm * timeinfo;
 	ostringstream AddedDate;
@@ -355,7 +353,7 @@ void Storage::AddNewObject(StoredObject& newobject){ //Функция добавления нового
 	DataBase->close();
 }
 
-//Remove objects with removers
+//-- Remove objects with removers
 void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов для удаления после добавления нового слоя (запускается при наличии отрицательных значений Delta
 	//int llSize = LayerList.size();
 
@@ -444,7 +442,7 @@ void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoi
 	}
 }
 
-//Remove object
+//+ Remove object
 void Storage::RemoveObject(int objectID){
 	string select_query, update_query;
 	ostringstream querystring;
@@ -490,6 +488,7 @@ void Storage::RemoveObject(int objectID){
 
 //---------------------------------------------------------------------------------------------------------------------------------------
 
+//+ Load all objects from DB
 void Storage::initObjectsFromDB(){
 	DataBase = new SQLiteDatabase();
 	DataBase->open(dbName);
@@ -593,6 +592,7 @@ void Storage::initObjectsFromDB(){
 	DataBase->close();
 }
 
+//+ Load all layerd from DB
 void Storage::initLayersFromDB(){
 	//Load layers
 	string select_query = "SELECT uid, storage_id, \
@@ -627,7 +627,7 @@ void Storage::initLayersFromDB(){
 		AddLayerFromDatabase(*(new StorageLayer(
 			dbuid,
 			dbstorage_id,
-			dbadd_date
+			dbadd_date,
 			dblayercloud,
 			dbfilename
 			)));

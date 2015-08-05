@@ -94,7 +94,8 @@ public:
 	~Storage();
 
 	//Функция вычисления Delta в реальных координатах для добавленного слоя
-	void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep); 
+	//void Storage::CalcNewLayerDelta(float PlaneClasterTollerance, int MinPlaneClasterSize, int MaxPlaneClasterSize, float CloudZStep); 
+	void Storage::CalcNewLayerDelta();
 	
 	//---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -126,7 +127,7 @@ public:
 	//Функция инициализации склада из базы данных
 	void initObjectsFromDB();
 	
-	void initLayersFromDB(){
+	void initLayersFromDB();
 
 	/*vector<int> GetAllObjects();
 	vector<int> GetActualObjects();

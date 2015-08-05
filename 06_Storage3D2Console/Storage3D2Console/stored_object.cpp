@@ -4,10 +4,12 @@
 
 using namespace std;
 
+//Empty Constructor
 StoredObject::StoredObject(){
 
 }
 
+//+ Constructor for copy StoredObject
 StoredObject::StoredObject(const StoredObject& storedobject){
 	removed = storedobject.removed;
 	UID = storedobject.UID;
@@ -29,7 +31,6 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	width = storedobject.width;
 	lenght = storedobject.lenght;
 	height = storedobject.height;
-	//square = storedobject.square;
 	Name = storedobject.Name;
 	fileName = storedobject.fileName;
 
@@ -42,7 +43,8 @@ StoredObject::StoredObject(const StoredObject& storedobject){
 	isHorizontalGroup = storedobject.isHorizontalGroup;
 	isVerticalGroup = storedobject.isVerticalGroup;
 }
-
+ 
+//+ Standart constructor for new StoredObject
 StoredObject::StoredObject(
 	int layerid, 
 	int storageid, 
@@ -79,8 +81,6 @@ StoredObject::StoredObject(
 	isHorizontalGroup = false;
 	isVerticalGroup = false;
 
-	//square = FLT_MAX;
-
 	step_degree = stepdegree;
 	max_degree = maxdegree;
 
@@ -95,13 +95,9 @@ StoredObject::StoredObject(
 	defined = false;
 
 	Name = name;
-	
-	//find_bbox();
-	//check_valid_object();
-	//check_isinside_point(pcl::PointXYZ(0, 0, 0));
 }
 
-//Constructor for init object from database
+//+ Constructor for init StoredObject from database
 StoredObject::StoredObject(
 	int dbuid,
 	int dblayer_id,
@@ -114,7 +110,7 @@ StoredObject::StoredObject(
 	float dbposition_y, 
 	float dbposition_z, 
 	float dbwidth, 
-	float dblenght, 
+	float dblenght,
 	float dbheight, 
 	float dbroll, 
 	float dbpitch, 
@@ -172,12 +168,14 @@ StoredObject::~StoredObject()
 {
 }
 
+//-- Find object type or mark as Undefined or Group
 void StoredObject::find_valid_object_type(float limit_array[6], float valid_percent){
 	
 	//FIXME. Should work with "object_cloud"
 
 	//ObjectType = ; //Идентификатор типа объекта (-1 - Undefined; 0 - Parallelogramm; 1 - VerticalCylinder; 2 - HorizontalCylinder)
-	
+	defined = true; //or false;
+	/*
 	std::cout << " width = " << width << std::endl;
 	std::cout << " lenght = " << lenght << std::endl;
 	
@@ -196,9 +194,10 @@ void StoredObject::find_valid_object_type(float limit_array[6], float valid_perc
 	else{
 		std::cout << " Not Valid 2d object" << std::endl;
 		defined = false;
-	}
+	}*/
 }
 
+//+ Check point position (inside/outside object's bounding box)
 bool StoredObject::check_isinside_point(const pcl::PointXYZ &check_point){
 	
 	//Eigen::Affine3f* transform_rotate = new Eigen::Affine3f(pcl::getTransformation(-position(0), -position(1), -position(2), 0, 0, 0));
@@ -232,6 +231,7 @@ bool StoredObject::check_isinside_point(const pcl::PointXYZ &check_point){
 	delete point_in_zero;
 }
 
+//-- Find parameters of minimal box around object's point cloud 
 void StoredObject::find_bbox(){
 	
 	pcl::PointCloud<pcl::PointXYZ>::Ptr zero_point_cloud(new pcl::PointCloud<pcl::PointXYZ>());
@@ -242,8 +242,10 @@ void StoredObject::find_bbox(){
 
 	Eigen::Vector3f mass_center = Eigen::Vector3f();
 
-	float cur_x_width, cur_y_lenght;
-	float cur_square;
+	float cur_x_width = 0;
+	float cur_y_lenght = 0;
+	float square = FLT_MAX;
+	float cur_square = 0;
 
 	double cloud_point[3];
 
@@ -272,6 +274,9 @@ void StoredObject::find_bbox(){
 	int y_pitch = 0;
 	int x_roll = 0;
 
+	//-------------------------------------------------------------------------------------------------
+	//FIXME. Add quick finding minimal BBox in 2 other axises
+	//Find bounding box with minimal upside's square 
 	for (int z_yaw = 0; z_yaw < max_degree; z_yaw += step_degree){
 		i++;
 		Eigen::Affine3f* transform_rotate = new Eigen::Affine3f(pcl::getTransformation(0, 0, 0, DEG2RAD(x_roll), DEG2RAD(y_pitch), DEG2RAD(z_yaw)));
@@ -301,10 +306,17 @@ void StoredObject::find_bbox(){
 
 		delete bBox;
 	}
+	//-------------------------------------------------------------------------------------------------
 
 	position = Eigen::Vector3f(mass_center(0), mass_center(1), mass_center(2));
 
-	//FIXME. Add calculation for 4 upVertexe
+	//FIXME. Add calculation for 4 upVertexes
+
+	//Find upVertexes
+	upVertex1 =  //Up cover vertex 1 
+	upVertex2 = //Up cover vertex 2
+	upVertex3 =  //Up cover vertex 3
+	upVertex4 = //Up cover vertex 4
 
 	CalcJamp();
 	
@@ -312,6 +324,7 @@ void StoredObject::find_bbox(){
 	delete feature_extractor;
 }
 
+//+ Mark object as removed
 void StoredObject::Remove(){
 	//Mark as removed
 	removed = true;
@@ -322,6 +335,7 @@ void StoredObject::Remove(){
 	RemovedDate = nowtimesec;
 }
 
+//- Calc quaternions and matrix for move BBox to zero position and back
 void StoredObject::CalcJamp(){
 	Eigen::Matrix3f rotational_matrix_OBB3f = Eigen::Matrix3f();
 	Eigen::Matrix4f rotational_matrix_OBB4f = Eigen::Matrix4f();

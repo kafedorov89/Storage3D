@@ -52,21 +52,20 @@ StorageLayer::StorageLayer(int storageid){ //Конструктор класса StorageLayer
 	storageID = storageid;
 }
 
-//Constructor for init layer from database
+//+ Constructor for init layer from database
 StorageLayer::StorageLayer(
 	int dbuid,
 	int dbstorage_id,
 	time_t dbadd_date,
 	pcl::PointCloud<pcl::PointXYZ>::Ptr dblayercloud,
-	string dbfilename,
+	string dbfilename
 	){
 	
 	UID = dbuid;
 	storageID = dbstorage_id;
-	AddedDate = 
-	fileName
-	DepthMap
-
+	AddedDate = dbadd_date;
+	DepthMap = dblayercloud;
+	fileName = dbfilename;
 }
 
 StorageLayer::~StorageLayer(){
