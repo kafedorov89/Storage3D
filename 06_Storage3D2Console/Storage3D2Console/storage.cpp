@@ -105,15 +105,13 @@ void Storage::AddNewLayer(StorageLayer& newlayer){ //Функция добавления нового с
 		std::to_string(timeinfo->tm_hour) << ":" <<
 		std::to_string(timeinfo->tm_min) << ":" <<
 		std::to_string(timeinfo->tm_sec);
-
-
 }
 
 //---------------------------------------------------------------------------------------------------------------------------------------
 //Object's functions
 
 //-- Find objects
-void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoinscount, float objectdensity){ //Функция поиска объектов, добавленных на новом слое
+void Storage::FindObjects(int curLayerUID){ //Функция поиска объектов, добавленных на новом слое
 	//int llSize = LayerList.size();
 	
 	if (LayerList[curLayerUID]->PositiveClasterList.size() > 0){
@@ -125,8 +123,8 @@ void Storage::FindObjects(int curLayerUID, float valid_percent, int nearestpoins
 			test_object->find_bbox();
 
 			//Check length and width of 2d_object
-			//FIXME. Add to find_valid_object_type() function or to Anoter function find_object_type(){ } object type recognition (Parallelogram, Cylinder)
-			test_object->find_valid_object_type(ObjectLimitSize, valid_percent);
+			//FIXME. Add to find_object_type() function or to Anoter function find_object_type(){ } object type recognition (Parallelogram, Cylinder)
+			test_object->find_object_type(ObjectLimitSize, valid_percent);
 
 			if (test_object->defined){
 
@@ -369,7 +367,7 @@ void Storage::RemoveObjects(int curLayerUID, float valid_percent, int nearestpoi
 			test_remover->find_bbox();
 
 			//Check length and width of 2d_object
-			test_remover->find_valid_object_type(ObjectLimitSize, valid_percent); //FIXME. 
+			test_remover->find_object_type(ObjectLimitSize, valid_percent); //FIXME. 
 
 			if (test_remover->defined){
 				//Check height in position (center) point

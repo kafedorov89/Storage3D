@@ -46,6 +46,7 @@ using namespace std;
 
 #include <pcl/io/pcd_io.h>
 
+vector<float> parse_param_str(string param_string);
 bool str_to_bool(string boolstr);
 string bool_to_str(bool booleanvalue);
 void SaveCloudToPCD(char* folder, char* name, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);

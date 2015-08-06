@@ -41,12 +41,8 @@ float object_density = 0.0; // (meter / м)
 
 // object's possible dimentions
 // допустимые габаритные размеры объекта
-float object_minx = 0.0; // (meter/м) Минимальная ширина объекта
-float object_miny = 0.0; // (meter/м) Минимальная длина объекта
-float object_minz = 0.0; // (meter/м) Минимальная высота объекта
-float object_maxx = 0.0; // (meter/м) Максимальная ширина объекта
-float object_maxy = 0.0; // (meter/м) Максимальная длина объекта
-float object_maxz = 0.0; // (meter/м) Максимальная ширина объекта
+string object_size_string;
+vector<float> object_size; 
 
 // choose pointcloud input device(uncomment only one)
 // выбор устройства сканирования для получения облака точек(раскомментировать только одну строку из всех)
@@ -81,18 +77,14 @@ void loadSettingsFile(){
 			if (key.first == "claster_max_points")
 				claster_max_points = key.second.get_value<int>();
 
-			if (key.first == "object_minx")
-				object_minx = key.second.get_value<float>();
-			if (key.first == "object_miny")
-				object_miny = key.second.get_value<float>();
-			if (key.first == "object_minz")
-				object_minz = key.second.get_value<float>();
-			if (key.first == "object_maxx")
-				object_maxx = key.second.get_value<float>();
-			if (key.first == "object_maxy")
-				object_maxy = key.second.get_value<float>();
-			if (key.first == "object_maxz")
-				object_maxz = key.second.get_value<float>();
+			if (key.first == "object_size"){
+				object_size_string = key.second.get_value<string>();
+
+				string delimiter = ", ";
+				object_size = parse_param_str(object_size_string, delimiter);
+			}
+
+			
 
 			if (key.first == "work_with_files")
 				work_with_files = key.second.get_value<bool>();
@@ -378,10 +370,10 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			std::cout << "Finding objects for add..." << std::endl;
 			//Find objects
-			storage->FindObjects(storage->LayerList.size() - 1, valid_percent, nearest_point_count, object_density);
+			storage->FindObjects(storage->LayerList.size() - 1, object_density);
 
 			std::cout << "Removing objects..." << std::endl;
-			//Find removers
+			//Remove objects
 			storage->RemoveObjects(storage->LayerList.size() - 1, valid_percent, nearest_point_count, object_density);
 
 			std::cout << "Refreshing visualization..." << std::endl;

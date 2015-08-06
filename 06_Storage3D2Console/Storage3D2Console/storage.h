@@ -85,12 +85,15 @@ public:
 	float CloudZStep;
 	SQLiteDatabase* DataBase;
 
-	float ObjectLimitSize[6];
+	vector<vector<float>> ObjectLimitSize;
 
 	//----------------------------------------------------------------------------------------------
 	//Методы склада
 
-	Storage(int uid, char* dbname, char* dbfolder, char* layersfolder, char* objectsfolder);
+	Storage(int uid, char* dbname, char* dbfolder, char* layersfolder, char* objectsfolder, 
+		float object_density,
+
+		);
 	~Storage();
 
 	//Функция вычисления Delta в реальных координатах для добавленного слоя
@@ -120,7 +123,7 @@ public:
 	void RemoveObject(int objectID); 
 	
 	//Функция поиска объектов, добавленных на новом слое
-	void FindObjects(int LayerUID, float valid_percent, int nearestpoinscount, float object_density); 
+	void FindObjects(int LayerUID); 
 	
 	//---------------------------------------------------------------------------------------------------------------------------------------
 

@@ -192,7 +192,7 @@ public:
 	~StoredObject();
 
 	//Функция проверки плотности точек на верхней поверхности объекта (по умолчанию задан порог >= 70% от площади прямоугольника)
-	void find_valid_object_type(float limit_array[6], float valid_percent);
+	void find_object_type();
 
 	//Функция проверки положения точки (внутри или снажи параллелограмма описывающего объект)
 	bool check_isinside_point(const pcl::PointXYZ &check_point);

@@ -169,7 +169,7 @@ StoredObject::~StoredObject()
 }
 
 //-- Find object type or mark as Undefined or Group
-void StoredObject::find_valid_object_type(float limit_array[6], float valid_percent){
+void StoredObject::find_object_type(float limit_array[6], float valid_percent){
 	
 	//FIXME. Should work with "object_cloud"
 

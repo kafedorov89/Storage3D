@@ -6,6 +6,23 @@ using namespace std;
 
 typedef pcl::PointXYZ PointT;
 
+vector<float> parse_param_str(string param_string){
+	vector<float> param_list;
+	std::string s = "scott>=tiger>=mushroom";
+	std::string delimiter = ">=";
+
+	size_t pos = 0;
+	std::string token;
+	while ((pos = s.find(delimiter)) != std::string::npos) {
+		token = s.substr(0, pos);
+		std::cout << token << std::endl;
+		s.erase(0, pos + delimiter.length());
+	}
+	std::cout << s << std::endl;
+
+	return param_list;
+}
+
 bool str_to_bool(string boolstr){
 	if (boolstr == "TRUE" || boolstr == "1" || boolstr == "true"){
 		return true;
