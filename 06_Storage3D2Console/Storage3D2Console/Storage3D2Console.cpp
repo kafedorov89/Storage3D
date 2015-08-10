@@ -84,8 +84,6 @@ void loadSettingsFile(){
 				object_size = parse_param_str(object_size_string, delimiter);
 			}
 
-			
-
 			if (key.first == "work_with_files")
 				work_with_files = key.second.get_value<bool>();
 			if (key.first == "work_with_kinect")
